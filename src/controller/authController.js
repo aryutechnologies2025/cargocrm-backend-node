@@ -3,7 +3,7 @@ import User from "../models/userModel.js";
 
  import crypto from "crypto";
  import bcrypt from 'bcrypt';
-import LoginLog from "../Models/loginLogModel.js";
+import LoginLog from "../models/loginLogModel.js";
 
 
 

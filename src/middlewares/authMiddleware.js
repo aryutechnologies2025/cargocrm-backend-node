@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
-import LoginLog from "../Models/loginLogModel.js";
+import LoginLog from "../models/loginLogModel.js";
 
 
 const useAuth = (req, res, next) => {
