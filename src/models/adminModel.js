@@ -2,20 +2,15 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
 
-const userSchema = new mongoose.Schema(
+const loginSchema = new mongoose.Schema(
   {
 
     name: {
       type: String,
       required: true,
-      minlength: 3,
+    
       
     },
-
-      lastName: {
-        type: String,
-      },
-    
 
     email: {
       type: String,
@@ -36,26 +31,6 @@ const userSchema = new mongoose.Schema(
   match: /^[0-9]{10,15}$/,
 },
 
-role: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Role",
-},
-    status: {
-      // type: Boolean,
-      type: String,
-      required: [true, "Please select a status"]
-    },
-
-    isDeleted: {
-    type: String,
-    default: "0"
-  },
-
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      immutable: true
-    },
     resetPasswordToken: String,
 resetPasswordExpire: Date,
   },
@@ -63,18 +38,18 @@ resetPasswordExpire: Date,
 );
 
 // Hash password
-userSchema.pre("save", async function () {
+loginSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
 
 //  Compare password
-userSchema.methods.comparePassword = async function (password) {
+loginSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-userSchema.index({ email: 1 });
+loginSchema.index({ email: 1 });
 // userSchema.index({ email: 1 }, { unique: true });
-const User = mongoose.model("User", userSchema);
+const Login = mongoose.model("Login", loginSchema);
 
-export default User;
+export default Login;

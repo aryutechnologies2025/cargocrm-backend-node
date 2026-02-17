@@ -4,33 +4,25 @@ import User from "../models/userModel.js";
  import crypto from "crypto";
  import bcrypt from 'bcrypt';
 import LoginLog from "../Models/loginLogModel.js";
+import Login from "../models/AdminModel.js";
 
 
 
 
-
+//login
 const loginUser = async (req, res) => {
   try {
-    // const { email, password } = req.body;
+
 const { email, password } = req.body;
 
     console.log("Login attempt for email:", email);
 
-    //  if (!captchaChecked) {
-    //   return res.status(400).json({
-    //     message: "Please verify captcha"
-    //   });
-    // }
+    const user = await Login.findOne({ email }).select("+password");
 
-    const user = await User.findOne({ email }).select("+password");
-    console.log("User not found");
-    if (!user || !user.status) {
-       return res.status(200).json({sucees:"false",email:'Invalid email'});
-    }
 
    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(200).json({sucees:"false", password: 'Invalid password' });
+      return res.status(200).json({success:"false", password: 'Invalid password' });
     }
 
     // Generate JWT
@@ -42,15 +34,20 @@ const { email, password } = req.body;
       { expiresIn: "1h" }
     );
 
+       // Save login log
+    await LoginLog.create({
+      name: user.name,
+      ip: req.ip,
+      loginTime: new Date(),
+      createdBy: user._id
+    });
 
     // Set cookie
     res.cookie("token", token, {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "strict",
-  //  secure: false,          // MUST be false on localhost
-  // sameSite: "lax", 
-  //  maxAge: 60 * 1000
+
    maxAge: 60 * 60 * 1000
 });
 
@@ -59,15 +56,15 @@ const { email, password } = req.body;
       token,
       user: {
         id: user._id,
-        firstName: user.firstName,
+        firstName: user.name,
         email: user.email,
-        role: user.role
+        // role: user.role
       }
     });
 
   } catch (err) {
     console.error("LOGIN ERROR ", err);
-    res.status(500).json({
+    res.json({
       message: "Login failed",
       error: err.message
     });
@@ -77,44 +74,43 @@ const { email, password } = req.body;
 
  const registerUser = async (req, res) => {
   try {
-    const { firstName, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     // Validate required fields
-    if (!firstName || !email || !password) {
-      return res.status(400).json({ 
+    if (!name || !email || !password) {
+      return res.json({ 
         message: "Missing required fields",
         required: ["firstName", "email", "password"]
       });
     }
 
     // Check if firstName meets minimum length
-    if (firstName.length < 3) {
-      return res.status(400).json({ 
+    if (name.length < 3) {
+      return res.json({ 
         message: "First name must be at least 3 characters long" 
       });
     }
 
-    const exists = await User.findOne({ email });
+    const exists = await Login.findOne({ email });
     if (exists) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.json({ message: "Email Already Exists" });
     }
 
-    const user = await User.create({
-      firstName,
+    const user = await Login.create({
+      name,
       email,
       password,   // auto-hashed by pre-save hook
-      role: role || "staff", 
-      createdBy: null
+    
     });
 
-    res.status(201).json({
+    res.json({
       success: true,
-      message: "User created successfully",
+      message: "User Registration successfully",
       user: {
         id: user._id,
-        firstName: user.firstName,
+        name: user.name,
         email: user.email,
-        role: user.role
+      
       }
     });
   } catch (err) {
@@ -122,13 +118,13 @@ const { email, password } = req.body;
     
     // Handle mongoose validation errors
     if (err.name === "ValidationError") {
-      return res.status(400).json({ 
+      return res.json({ 
         message: "Validation error", 
         errors: Object.values(err.errors).map(e => e.message)
       });
     }
     
-    res.status(500).json({ 
+    res.json({ 
       message: "Registration failed",
       error: err.message 
     });
@@ -142,7 +138,7 @@ const { email, password } = req.body;
 
     //captcha check
     if (!captchaChecked) {
-      return res.status(400).json({ message: "Please verify captcha" });
+      return res.json({ message: "Please verify captcha" });
     }
 
     const user = await User.findOne({ email });
@@ -174,7 +170,7 @@ const { email, password } = req.body;
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Forgot password failed" });
+    res.json({ message: "Forgot password failed" });
   }
 };
 
@@ -194,7 +190,7 @@ const { email, password } = req.body;
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+      return res.json({ message: "Invalid or expired token" });
     }
 
     user.password = password; // auto-hashed by pre-save hook
@@ -206,29 +202,10 @@ const { email, password } = req.body;
     res.json({ message: "Password reset successful" });
 
   } catch (error) {
-    res.status(500).json({ message: "Reset password failed" });
+    res.json({ message: "Reset password failed" });
   }
 };
 
-
-
-// const logoutUser = async (req, res) => {
-//   try {
-//     await LoginLog.updateOne(
-//       { userId: req.user._id, status: "active" },
-//       { status: "inactive" }
-//     );
-
-//     res.json({
-//       success: true,
-//       message: "Logged out successfully"
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       message: "Logout failed"
-//     });
-//   }
-// };
 
 const logoutUser = (req, res) => {
   res.clearCookie("token", {
@@ -241,3 +218,5 @@ const logoutUser = (req, res) => {
 
 
 export { loginUser, registerUser, forgotPassword, logoutUser, resetPassword };
+
+

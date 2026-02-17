@@ -8,13 +8,21 @@ const role = new mongoose.Schema({
     trim: true,
   },
  
-  status: { type: String, required: [true, "Please select a status"] },
+  status: {
+    type: String,
+    enum: ["1", "0"], // 1 = active, 0 = inactive
+    default: "1"
+  },
+
+  isDeleted: {
+    type: String,
+    default: "0"
+  },
 
 createdBy: {
   type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  required: true,
-  immutable: true
+  ref: "LoginLog",
+
 }
 
 },{

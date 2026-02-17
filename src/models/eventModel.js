@@ -89,9 +89,8 @@ trackingNumber: {
   
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-    immutable: true
+    ref: "LoginLog",
+
   }
 }, {
   timestamps: true

@@ -58,7 +58,7 @@ const customerSchema = new mongoose.Schema({
 
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "LoginLog",
     // required: true,
     // immutable: true
   }
