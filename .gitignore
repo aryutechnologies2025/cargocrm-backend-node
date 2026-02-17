@@ -1,13 +1,19 @@
-# Node modules
+# Dependencies
 node_modules/
+
+# Environment variables
+.env
 
 # Logs
 *.log
+logs/
 
-# Environment files
-# .env
+# OS files
+.DS_Store
 
-# Output directories
+# Build output (if ever used)
 dist/
 build/
 
+# PM2
+.pm2/
