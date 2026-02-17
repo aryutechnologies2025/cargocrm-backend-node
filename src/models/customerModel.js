@@ -1,46 +1,39 @@
 import mongoose from "mongoose";
 
+const collectionName = "customers";
 const customerSchema = new mongoose.Schema({
+  // customer_id: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   auto: true,
+  //   required: true
+  // },
   customer_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    auto: true,
-    required: true
+    type: String,
+    unique: true
   },
   name: {
     type: String,
     required: [true, "Please provide a customer name"],
     trim: true,
-    minlength: [3, "Name must be at least 3 characters long"],
-    validate: {
-      validator: function(value) {
-        return value.trim().length >= 3;
-      },
-      message: "Name must be at least 3 characters long"
-    }
+   
+   
   },
   email: {
     type: String,
     required: [true, "Please provide an email"],
     trim: true,
-    lowercase: true,
-    validate: [
-      {
-        validator: function(value) {
-          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-        },
-        message: "Please provide a valid email address"
-      }
-    ]
+    
+   
   },
   phone: {
     type: String,
     required: [true, "Please provide a phone number"],
-    validate: {
-      validator: function(value) {
-        return /^\d{10,15}$/.test(value);
-      },
-      message: "Phone number must be 10-15 digits"
-    }
+    // validate: {
+    //   validator: function(value) {
+    //     return /^\d{10,15}$/.test(value);
+    //   },
+    //   message: "Phone number must be 10-15 digits"
+    // }
   },
   address: {
     type: String,
@@ -56,9 +49,9 @@ const customerSchema = new mongoose.Schema({
     // }
   },
 
-  createdBy: {
+  created_by: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "LoginLog",
+    ref: "Admin",
     // required: true,
     // immutable: true
   }
@@ -70,5 +63,5 @@ const customerSchema = new mongoose.Schema({
 customerSchema.index({ name: 1 }); // Regular index instead of hashed
 customerSchema.index({ email: 1 }, { unique: true });
 
-const Customer = mongoose.model("Customer", customerSchema);
+const Customer = mongoose.model("Customer", customerSchema, collectionName);
 export default Customer;

@@ -24,6 +24,7 @@ import authRoutes from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import roleRouter from "./routes/roleRouter.js";
 import useAuth from "./middlewares/authMiddleware.js";
+import customerRouter from "./routes/customerRouter.js";
 
 
 const app = express();
@@ -41,7 +42,9 @@ app.use("/api/auth", authRoutes);
 
 // Protected Routes (Require Authentication)
 app.use("/api/users", useAuth, userRouter);
-app.use("/api/roles", useAuth, roleRouter);
+// app.use("/api/roles", useAuth, roleRouter);
+app.use("/api/roles", roleRouter);
+app.use("/api/customers",useAuth, customerRouter);
 
 
 //  Test Route
