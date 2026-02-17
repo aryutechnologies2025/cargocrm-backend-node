@@ -1,24 +1,36 @@
 import User from "../models/userModel.js";
+import bcrypt from "bcrypt";
 
  const createUser = async (req, res) => {
   try {
-    const { name, email, password, role,status,createdBy } = req.body;
+    const { name, email, password,phone,role,status,createdBy } = req.body;
 
     const exists = await User.findOne({ email });
     if (exists) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await User.create({
       name,
       email,
-      password,
+      password: hashedPassword,
+      phone,
       role,
       status,
       createdBy
     });
 
-    res.status(201).json({ success: true, user });
+     res.json({
+      success: true,
+      message: "User created successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -35,26 +47,56 @@ const getUserById = async (req, res) => {
 }
 
 const updateUser = async (req, res) => {
-  const { id } = req.params;
-  // Check if the user exists
-  const existingUser = await User.findById({ _id: id });
-  if (!existingUser) {
-    return res.json({ success: false, message: "User Not Found" });
-  } 
-  // Check if the new name already exists
-  const { name } = req.body;  
-  if (name) {
-    const userExists = await User.findById({ name, _id: { $ne: id } });
-    if (userExists) {
-      return res.json({ success: false, errors: { name: "User name already exists" } });
+  try {
+    const { id } = req.params;
+
+    // 1Check user exists
+    const existingUser = await User.findById(id);
+    if (!existingUser) {
+      return res.json({
+        success: false,
+        message: "User Not Found"
+      });
     }
+
+    //  Check duplicate name (excluding current user)
+    const { name } = req.body;
+    if (name) {
+      const userExists = await User.findOne({
+        name,
+        _id: { $ne: id }
+      });
+
+      if (userExists) {
+        return res.json({
+          success: false,
+          errors: { name: "User name already exists" }
+        });
+      }
+    }
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: "User Updated Successfully",
+      user: updatedUser
+    });
+
+  } catch (err) {
+    console.error("UPDATE USER ERROR:", err);
+    res.json({
+      success: false,
+      message: err.message
+    });
   }
-  // Update the role
-  const updated = await User.findByIdAndUpdate(id, req.body,{
-    new: true,
-  });
-  res.json({success:true,message:"User Uploaded Successfully",updated});
 };
+
 
  const deleteUser = async (req, res) => {
   const { id } = req.params;
@@ -64,12 +106,10 @@ const updateUser = async (req, res) => {
       { isDeleted: 1 },
       { new: true }
     );
-    if (userDetails) {
+    if (!userDetails) {
       return res.json({ success: false, message: "User Not Found" });
     }
-    res
-      
-      .json({ success: true, message: "User deleted successfully" });
+    res.json({ success: true, message: "User deleted successfully" });
   } catch (err) {
     res.json({ success: false, error: err.message });
   }

@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+const collectionName = "role_management";
+
 const role = new mongoose.Schema({
   
   name: {
@@ -14,14 +16,14 @@ const role = new mongoose.Schema({
     default: "1"
   },
 
-  isDeleted: {
+  is_deleted: {
     type: String,
     default: "0"
   },
 
-createdBy: {
+created_by: {
   type: mongoose.Schema.Types.ObjectId,
-  ref: "LoginLog",
+  ref: "Login",
 
 }
 
@@ -32,6 +34,7 @@ createdBy: {
 
 
 role.index({ name: 1 }, { unique: true }); // Unique role name
-// role.index({ departmentId: 1 }); // Index on department
-const Role = mongoose.model("Role", role);
+
+const Role = mongoose.model("Role", role, collectionName);
+// const Role = mongoose.model("Role", role);
 export default Role;

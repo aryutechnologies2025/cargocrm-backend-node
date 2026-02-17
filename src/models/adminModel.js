@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
-
+const collectionName = "login";
 const loginSchema = new mongoose.Schema(
   {
 
@@ -15,7 +15,6 @@ const loginSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      // unique: true,
       trim: true
       
     },
@@ -50,6 +49,9 @@ loginSchema.methods.comparePassword = async function (password) {
 
 loginSchema.index({ email: 1 });
 // userSchema.index({ email: 1 }, { unique: true });
+
+
+// const Login = mongoose.model("Login", loginSchema, collectionName);
 const Login = mongoose.model("Login", loginSchema);
 
 export default Login;

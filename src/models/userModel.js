@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
+const collectionName = "users";
 
 const userSchema = new mongoose.Schema(
   {
@@ -8,11 +9,10 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      minlength: 3,
-      
+     
     },
 
-      lastName: {
+      last_name: {
         type: String,
       },
     
@@ -20,7 +20,6 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      // unique: true,
       trim: true
       
     },
@@ -31,7 +30,7 @@ const userSchema = new mongoose.Schema(
       select: false //  never return password
     },
 
-    phoneNumber: {
+    phone: {
   type: String,
   match: /^[0-9]{10,15}$/,
 },
@@ -46,14 +45,14 @@ role: {
       required: [true, "Please select a status"]
     },
 
-    isDeleted: {
+    is_deleted: {
     type: String,
     default: "0"
   },
 
-    createdBy: {
+    created_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Login",
       immutable: true
     },
     resetPasswordToken: String,
@@ -75,6 +74,8 @@ userSchema.methods.comparePassword = async function (password) {
 
 userSchema.index({ email: 1 });
 // userSchema.index({ email: 1 }, { unique: true });
-const User = mongoose.model("User", userSchema);
+
+
+const User = mongoose.model("User", userSchema, collectionName);
 
 export default User;

@@ -2,6 +2,25 @@
 import Customer from "../models/customerModel.js";
 import { checkExistingRecord, handleValidationError } from "./baseController.js";
 
+const generateCustomerId = async () => {
+  const lastCustomer = await Customer.findOne()
+    .sort({ createdAt: -1 })
+    .select("customerId");
+
+  if (!lastCustomer || !lastCustomer.customerId) {
+    return "custom-0001";
+  }
+
+  const lastNumber = parseInt(
+    lastCustomer.customerId.split("-")[1],
+    10
+  );
+
+  const nextNumber = lastNumber + 1;
+
+  return `custom-${String(nextNumber).padStart(4, "0")}`;
+};
+
 
  const addCustomer = async (req, res) => {
   try {
@@ -12,16 +31,25 @@ import { checkExistingRecord, handleValidationError } from "./baseController.js"
     const { name, email, phone, address, status } = req.body;
 
     // Check if email already exists
-    const emailExists = await checkExistingRecord(Customer, { email }, "email", res);
-    if (emailExists) return;
+      const emailExists = await Customer.findOne({ email });
+    if (emailExists) {
+      return res.json({
+        success: false,
+        message: "Email already exists"
+      });
+    }
+
+     //  Generate customerId
+    const customerId = await generateCustomerId();
 
     const customer = new Customer({
+      customerId,
       name,
       email,
       phone,
       address,
       status,
-      createdBy: req.user._id
+      createdBy
     });
 
     await customer.save();
@@ -37,9 +65,9 @@ import { checkExistingRecord, handleValidationError } from "./baseController.js"
 
  const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find({ status: "1" })
-      .populate("createdBy", "name email");
-    res.status(200).json({ success: true, data: customers });
+    const customers = await Customer.find({  isDeleted: "0" })
+      .populate("createdBy", "name", " email");
+    res.json({ success: true, data: customers });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
@@ -48,7 +76,7 @@ import { checkExistingRecord, handleValidationError } from "./baseController.js"
  const getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.id)
-      .populate("createdBy", "name email");
+      .populate("createdBy", "name", " email");
     
     if (!customer) {
       return res.status(404).json({ success: false, message: "Customer not found" });
@@ -90,20 +118,21 @@ import { checkExistingRecord, handleValidationError } from "./baseController.js"
 };
 
  const deleteCustomer = async (req, res) => {
+  const { id } = req.params;
   try {
-    const customer = await Customer.findById(req.params.id);
-    
-    if (!customer) {
-      return res.status(404).json({ success: false, message: "Customer not found" });
+    const customerDetails = await User.findByIdAndUpdate(
+      id,
+      { isDeleted: 1 },
+      { new: true }
+    );
+    if (!customerDetails) {
+      return res.json({ success: false, message: "Customer Not Found" });
     }
-
-    customer.status = "inactive";
-    await customer.save();
-
-    res.status(200).json({ success: true, message: "Customer deactivated successfully" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: true, message: "Customer deleted successfully" });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
   }
 };
+
 
 export { addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };
