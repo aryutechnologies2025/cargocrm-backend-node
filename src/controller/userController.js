@@ -2,7 +2,7 @@ import User from "../models/userModel.js";
 
  const createUser = async (req, res) => {
   try {
-    const { name, email, password, role,status } = req.body;
+    const { name, email, password, role,status,createdBy } = req.body;
 
     const exists = await User.findOne({ email });
     if (exists) {
@@ -15,7 +15,7 @@ import User from "../models/userModel.js";
       password,
       role,
       status,
-      createdBy: req.user?.id  
+      createdBy
     });
 
     res.status(201).json({ success: true, user });
@@ -25,31 +25,54 @@ import User from "../models/userModel.js";
 };
 
  const getAllUsers = async (req, res) => {
-  const users = await User.find().select("-password");
+  const users = await User.find({ isDeleted: "0" });
   res.json({ success: true, users });
 };
 
 const getUserById = async (req, res) => {
-  const user = await User.findById(req.params.id).select("-password");
+  const user = await User.findById(req.params.id);
   res.json({ success: true, user });
 }
 
- const updateUser = async (req, res) => {
-  const updated = await User.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  ).select("-password");
-
-  res.json({ success: true, updated });
+const updateUser = async (req, res) => {
+  const { id } = req.params;
+  // Check if the user exists
+  const existingUser = await User.findById({ _id: id });
+  if (!existingUser) {
+    return res.json({ success: false, message: "User Not Found" });
+  } 
+  // Check if the new name already exists
+  const { name } = req.body;  
+  if (name) {
+    const userExists = await User.findById({ name, _id: { $ne: id } });
+    if (userExists) {
+      return res.json({ success: false, errors: { name: "User name already exists" } });
+    }
+  }
+  // Update the role
+  const updated = await User.findByIdAndUpdate(id, req.body,{
+    new: true,
+  });
+  res.json({success:true,message:"User Uploaded Successfully",updated});
 };
 
  const deleteUser = async (req, res) => {
-  await User.findByIdAndUpdate(req.params.id, {
-    status: false
-  });
-
-  res.json({ success: true, message: "User Deleted" });
+  const { id } = req.params;
+  try {
+    const userDetails = await User.findByIdAndUpdate(
+      id,
+      { isDeleted: 1 },
+      { new: true }
+    );
+    if (userDetails) {
+      return res.json({ success: false, message: "User Not Found" });
+    }
+    res
+      
+      .json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
 };
 
 

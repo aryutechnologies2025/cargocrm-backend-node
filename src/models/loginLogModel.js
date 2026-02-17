@@ -2,13 +2,8 @@ import mongoose from "mongoose";
 
 const loginLogSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true
-    },
 
-    firstName: {
+    name: {
       type: String,
       required: true
     },
@@ -24,22 +19,18 @@ const loginLogSchema = new mongoose.Schema(
       required: true
     },
 
-    status: {
-      type: String,
-      enum: ["active", "inactive"],
-      required: true
-    },
+  
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Login",
       immutable: true
     }
   },
   { timestamps: true }
 );
 
-loginLogSchema.index({ loginTime: 1, userId: 1 });
+loginLogSchema.index({createdAt: -1 });
 const LoginLog = mongoose.model("LoginLog", loginLogSchema);
 
 export default LoginLog;
