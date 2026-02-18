@@ -7,15 +7,15 @@ import { handleValidationError } from "./baseController.js";
  const createOrder = async (req, res) => {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ success: false, message: "Data is required" });
+      return res.json({ success: false, message: "Data is required" });
     }
 
-    const { sender_id, beneficiary_id, cargoMode, packed, status } = req.body;
+    const { sender_id, beneficiary_id, cargo_mode, packed, status,created_by } = req.body;
 
     // Verify sender exists and is active
     const sender = await Customer.findOne({ _id: sender_id, status: "active" });
     if (!sender) {
-      return res.status(400).json({ 
+      return res.json({ 
         success: false, 
         errors: { sender_id: "Invalid or inactive sender" } 
       });
@@ -24,7 +24,7 @@ import { handleValidationError } from "./baseController.js";
     // Verify beneficiary exists and is active
     const beneficiary = await Beneficiary.findOne({ _id: beneficiary_id, status: "active" });
     if (!beneficiary) {
-      return res.status(400).json({ 
+      return res.json({ 
         success: false, 
         errors: { beneficiary_id: "Invalid or inactive beneficiary" } 
       });
@@ -33,10 +33,10 @@ import { handleValidationError } from "./baseController.js";
     const order = new Order({
       sender_id,
       beneficiary_id,
-      cargoMode,
+      cargo_mode,
       packed,
       status,
-      createdBy: req.user._id
+      created_by
     });
 
     await order.save();
@@ -45,20 +45,20 @@ import { handleValidationError } from "./baseController.js";
     await order.populate([
       { path: "sender_id", select: "name email phone" },
       { path: "beneficiary_id", select: "name email phone" },
-      { path: "createdBy", select: "name email" }
+    { path: "created_by", select: "name email" }
     ]);
 
-    res.status(201).json({ 
+    res.json({ 
       success: true, 
       message: "Order added successfully", 
-      data: order 
+
     });
 
   } catch (error) {
     console.log("error", error);
     const validationError = handleValidationError(error, res);
     if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -70,9 +70,9 @@ import { handleValidationError } from "./baseController.js";
       .populate("createdBy", "name email")
       .sort({ createdAt: -1 });
       
-    res.status(200).json({ success: true, data: orders });
+    res.json({ success: true, data: orders });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -84,12 +84,12 @@ import { handleValidationError } from "./baseController.js";
       .populate("createdBy", "name email");
     
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.json({ success: false, message: "Order not found" });
     }
     
-    res.status(200).json({ success: true, data: order });
+    res.json({ success: true, data: order });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -105,9 +105,9 @@ import { handleValidationError } from "./baseController.js";
       .populate("createdBy", "name email")
       .sort({ createdAt: -1 });
       
-    res.status(200).json({ success: true, data: orders });
+    res.json({ success: true, data: orders });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -123,9 +123,9 @@ import { handleValidationError } from "./baseController.js";
       .populate("createdBy", "name email")
       .sort({ createdAt: -1 });
       
-    res.status(200).json({ success: true, data: orders });
+    res.json({ success: true, data: orders });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -135,7 +135,7 @@ import { handleValidationError } from "./baseController.js";
     
     const order = await Order.findById(id);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.json({ success: false, message: "Order not found" });
     }
 
     // If updating references, verify they exist
@@ -144,7 +144,7 @@ import { handleValidationError } from "./baseController.js";
     if (sender_id && sender_id !== order.sender_id.toString()) {
       const sender = await Customer.findOne({ _id: sender_id, status: "active" });
       if (!sender) {
-        return res.status(400).json({ 
+        return res.json({ 
           success: false, 
           errors: { sender_id: "Invalid or inactive sender" } 
         });
@@ -154,7 +154,7 @@ import { handleValidationError } from "./baseController.js";
     if (beneficiary_id && beneficiary_id !== order.beneficiary_id.toString()) {
       const beneficiary = await Beneficiary.findOne({ _id: beneficiary_id, status: "active" });
       if (!beneficiary) {
-        return res.status(400).json({ 
+        return res.json({ 
           success: false, 
           errors: { beneficiary_id: "Invalid or inactive beneficiary" } 
         });
@@ -170,16 +170,16 @@ import { handleValidationError } from "./baseController.js";
       { path: "createdBy", select: "name email" }
     ]);
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       message: "Order updated successfully", 
-      data: updated 
+      
     });
   } catch (error) {
     console.log("error", error);
     const validationError = handleValidationError(error, res);
     if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -188,15 +188,15 @@ import { handleValidationError } from "./baseController.js";
     const order = await Order.findById(req.params.id);
     
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.json({ success: false, message: "Order not found" });
     }
 
     order.status = "inactive";
     await order.save();
 
-    res.status(200).json({ success: true, message: "Order deactivated successfully" });
+    res.json({ success: true, message: "Order deactivated successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 

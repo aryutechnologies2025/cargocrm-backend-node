@@ -1,33 +1,27 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
-const collectionName = "login";
 const loginSchema = new mongoose.Schema(
   {
 
     name: {
       type: String,
-      required: true,
-    
-      
+   trim: true
     },
 
     email: {
       type: String,
-      required: true,
       trim: true
       
     },
 
     password: {
       type: String,
-      required: true,
       select: false //  never return password
     },
 
-    phoneNumber: {
-  type: String,
-  match: /^[0-9]{10,15}$/,
+    phone: {
+  type: String
 },
 
     resetPasswordToken: String,
@@ -48,10 +42,7 @@ loginSchema.methods.comparePassword = async function (password) {
 };
 
 loginSchema.index({ email: 1 });
-// userSchema.index({ email: 1 }, { unique: true });
 
-
-// const Login = mongoose.model("Login", loginSchema, collectionName);
 const Login = mongoose.model("Login", loginSchema);
 
 export default Login;

@@ -21,7 +21,7 @@ const { email, password } = req.body;
    //  Check user exists
     const user = await Login.findOne({ email }).select("+password");
     if (!user) {
-      return res.status(401).json({
+      return res.json({
         success: false,
         message: "Invalid email or password"
       });
@@ -30,7 +30,7 @@ const { email, password } = req.body;
     //  Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({
+      return res.json({
         success: false,
         message: "Invalid email or password"
       });
@@ -63,7 +63,7 @@ const { email, password } = req.body;
    maxAge: 60 * 60 * 1000
 });
 
-    res.status(200).json({
+    res.json({
       success: true,
       token,
       user: {
@@ -225,7 +225,7 @@ const logoutUser = (req, res) => {
     secure: process.env.NODE_ENV === "development",
     sameSite: "strict",
   });
-  res.status(200).json({ message: "Logged out successfully" });
+  res.json({ message: "Logged out successfully" });
 };
 
 

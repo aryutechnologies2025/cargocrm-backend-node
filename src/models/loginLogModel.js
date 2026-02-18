@@ -1,27 +1,27 @@
 import mongoose from "mongoose";
 
+
 const loginLogSchema = new mongoose.Schema(
   {
 
     name: {
       type: String,
-      required: true
+trim: true
     },
 
-    loginTime: {
+    login_time: {
       type: Date,
-      required: true,
       default: Date.now
     },
 
     ip: {
       type: String,
-      required: true
+      trim: true
     },
 
   
 
-    createdBy: {
+    created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Login",
       immutable: true

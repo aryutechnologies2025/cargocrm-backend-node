@@ -5,14 +5,14 @@ import { checkExistingRecord, handleValidationError } from "./baseController.js"
 const generateCustomerId = async () => {
   const lastCustomer = await Customer.findOne()
     .sort({ createdAt: -1 })
-    .select("customerId");
+    .select("customer_id");
 
-  if (!lastCustomer || !lastCustomer.customerId) {
+  if (!lastCustomer || !lastCustomer.customer_id) {
     return "custom-0001";
   }
 
   const lastNumber = parseInt(
-    lastCustomer.customerId.split("-")[1],
+    lastCustomer.customer_id.split("-")[1],
     10
   );
 
@@ -25,10 +25,10 @@ const generateCustomerId = async () => {
  const addCustomer = async (req, res) => {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ success: false, message: "Data is required" });
+      return res.json({ success: false, message: "Data is required" });
     }
 
-    const { name, email, phone, address, status } = req.body;
+    const { name, email, phone, address, status,create_by } = req.body;
 
     // Check if email already exists
       const emailExists = await Customer.findOne({ email });
@@ -40,51 +40,52 @@ const generateCustomerId = async () => {
     }
 
      //  Generate customerId
-    const customerId = await generateCustomerId();
+    const customer_id = await generateCustomerId();
 
     const customer = new Customer({
-      customerId,
+      customer_id,
       name,
       email,
       phone,
       address,
       status,
-      createdBy
+      create_by
     });
 
     await customer.save();
-    res.status(201).json({ success: true, message: "Customer added successfully", data: customer });
+    res.json({ success: true, message: "Customer added successfully"});
 
-  } catch (error) {
-    console.log("error", error);
-    const validationError = handleValidationError(error, res);
-    if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }catch (error) {
+    console.error("ADD CUSTOMER ERROR:", error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
  const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find({  isDeleted: "0" })
-      .populate("createdBy", "name", " email");
+    const customers = await Customer.find({  is_deleted: "0" })
+      .populate("created_by", "name email");
     res.json({ success: true, data: customers });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
  const getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.id)
-      .populate("createdBy", "name", " email");
+      .populate("created_by", "name", " email");
     
     if (!customer) {
-      return res.status(404).json({ success: false, message: "Customer not found" });
+      return res.json({ success: false, message: "Customer not found" });
     }
     
-    res.status(200).json({ success: true, data: customer });
+    res.json({ success: true, data: customer });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message:error.message || "Internal Server Error" });
   }
 };
 
@@ -94,7 +95,7 @@ const generateCustomerId = async () => {
     
     const customer = await Customer.findById(id);
     if (!customer) {
-      return res.status(404).json({ success: false, message: "Customer not found" });
+      return res.json({ success: false, message: "Customer not found" });
     }
 
     const { email } = req.body;
@@ -108,21 +109,21 @@ const generateCustomerId = async () => {
       runValidators: true
     });
 
-    res.status(200).json({ success: true, message: "Customer updated successfully", data: updated });
+    res.json({ success: true, message: "Customer updated successfully"});
   } catch (error) {
     console.log("error", error);
     const validationError = handleValidationError(error, res);
     if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
  const deleteCustomer = async (req, res) => {
   const { id } = req.params;
   try {
-    const customerDetails = await User.findByIdAndUpdate(
+    const customerDetails = await Customer.findByIdAndUpdate(
       id,
-      { isDeleted: 1 },
+      { is_deleted: 1 },
       { new: true }
     );
     if (!customerDetails) {

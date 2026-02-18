@@ -25,6 +25,7 @@ import userRouter from "./routes/userRoutes.js";
 import roleRouter from "./routes/roleRouter.js";
 import useAuth from "./middlewares/authMiddleware.js";
 import customerRouter from "./routes/customerRouter.js";
+import beneficiaryRouter from "./routes/beneficiaryRouter.js";
 
 
 const app = express();
@@ -45,6 +46,7 @@ app.use("/api/users", useAuth, userRouter);
 // app.use("/api/roles", useAuth, roleRouter);
 app.use("/api/roles", roleRouter);
 app.use("/api/customers",useAuth, customerRouter);
+app.use("/api/beneficiary",useAuth,beneficiaryRouter);
 
 
 //  Test Route

@@ -11,8 +11,8 @@ import {
 const beneficiaryRouter = express.Router();
 
 beneficiaryRouter.post("/create-beneficiary", addBeneficiary);
-beneficiaryRouter.get("/view-beneficiarys", getBeneficiaries);
-beneficiaryRouter.get("/view-beneficiarys/:id", getBeneficiaryById);
+beneficiaryRouter.get("/view-beneficiary", getBeneficiaries);
+beneficiaryRouter.get("/view-beneficiary/:id", getBeneficiaryById);
 beneficiaryRouter.put("/edit-beneficiary/:id", editBeneficiary);
 beneficiaryRouter.delete("/delete-beneficiary/:id", deleteBeneficiary);
 
