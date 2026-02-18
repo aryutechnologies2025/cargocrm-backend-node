@@ -50,6 +50,6 @@ app.use("/api/beneficiary",useAuth,beneficiaryRouter);
 
 
 //  Test Route
-app.get("/", (req, res) => res.send("Cargo backend API running"));
-
+app.get("/api", (req, res) => res.send("Cargo backend API running"));
+app.get("/api/test", (req, res) => res.send("Cargo backend API TEST running"));
 export default app; // Export the configured engine
