@@ -12,6 +12,8 @@ import Login from "../models/adminModel.js";
 
 //login
 const loginUser = async (req, res) => {
+  console.log("🔥 NEW LOGIN CONTROLLER HIT 🔥");
+
   try {
 
 const { email, password } = req.body;

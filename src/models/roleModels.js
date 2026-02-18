@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const collectionName = "role_management";
+const collectionName = "roles";
 
 const role = new mongoose.Schema({
   
