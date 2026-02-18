@@ -7,14 +7,14 @@ const addRole = async (req, res) => {
   try{
   
    if (!req.body || Object.keys(req.body).length === 0) {
-    return res.status(200).json({ success: false, message: "Data Is Required" });
+    return res.json({ success: false, message: "Data Is Required" });
   }
 
   const { name, status,createdBy } = req.body;
   // Check if role already exists
   const existingRole = await Role.findOne({ name });
   if (existingRole) {         
-    return res.status(400).json({ success: false, errors: { name: "Role Already Exists" } });
+    return res.json({ success: false, errors: { name: "Role Already Exists" } });
   }
 
   const role = new Role({ name, status });
@@ -56,7 +56,7 @@ const editRole = async (req, res) => {
   // Check if the role exists
   const existingRole = await Role.findOne({ _id: id });
   if (!existingRole) {
-    return res.status(404).json({ success: false, message: "Role Not Found" });
+    return res.json({ success: false, message: "Role Not Found" });
   } 
   // Check if the new name already exists
   const { name } = req.body;  
@@ -79,14 +79,14 @@ const deleteRole = async (req, res) => {
   try {
     const roleDetails = await Role.findByIdAndUpdate(
       id,
-      { isDeleted: 1 },
+      { is_deleted: 1 },
       { new: true }
     );
     if (!roleDetails) {
-      return res.status(404).json({ success: false, message: "Role Not Found" });
+      return res.json({ success: false, message: "Role Not Found" });
     }
     res
-      .status(200)
+      
       .json({ success: true, message: "Role deleted successfully" });
   } catch (err) {
     res.json({ success: false, error: err.message });

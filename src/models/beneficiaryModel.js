@@ -1,65 +1,49 @@
 import mongoose from "mongoose";
 
+const collectionName = "beneficiaries";
 const beneficiarySchema = new mongoose.Schema({
   beneficiary_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    auto: true,
-    required: true
+    type: String,
+    unique: true
   },
   name: {
     type: String,
-    required: [true, "Please provide a beneficiary name"],
-    trim: true,
-    minlength: [3, "Name must be at least 3 characters long"],
-    validate: {
-      validator: function(value) {
-        return value.trim().length >= 3;
-      },
-      message: "Name must be at least 3 characters long"
-    }
+     trim: true
   },
   email: {
     type: String,
-    required: [true, "Please provide an email"],
-    trim: true,
-    lowercase: true,
-    validate: [
-      {
-        validator: function(value) {
-          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-        },
-        message: "Please provide a valid email address"
-      }
-    ]
+trim: true
+    
   },
   phone: {
     type: String,
-    required: [true, "Please provide a phone number"],
-    validate: {
-      validator: function(value) {
-        return /^\d{10,15}$/.test(value);
-      },
-      message: "Phone number must be 10-15 digits"
-    }
+
   },
   address: {
     type: String,
-    required: [true, "Please provide an address"],
-    trim: true
+    
+  },
+  city: {
+    type: String,    
+  },
+ 
+  country: {
+    type: String,
+   
   },
   status: {
     type: String,
-    required: [true, "Please select a status"],
-    enum: {
-      values: ["active", "inactive"],
-      message: "Status must be either active or inactive"
-    }
+
   },
 
-  createdBy: {
+      is_deleted: {
+    type: String,
+    default: "0"
+  },
+
+  created_by: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+    ref: "Admin",
     immutable: true
   }
 }, {
@@ -69,5 +53,5 @@ const beneficiarySchema = new mongoose.Schema({
 beneficiarySchema.index({ name: 1 });
 beneficiarySchema.index({ email: 1 }, { unique: true });
 
-const Beneficiary = mongoose.model("Beneficiary", beneficiarySchema);
+const Beneficiary = mongoose.model("Beneficiary", beneficiarySchema, collectionName);
 export default Beneficiary;

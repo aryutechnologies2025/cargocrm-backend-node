@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 
     const exists = await User.findOne({ email });
     if (exists) {
-      return res.status(400).json({ message: "Email already exists" });
+      return res.json({ message: "Email already exists" });
     }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -25,19 +25,14 @@ import bcrypt from "bcrypt";
      res.json({
       success: true,
       message: "User created successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      }
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.json({ message: err.message });
   }
 };
 
  const getAllUsers = async (req, res) => {
-  const users = await User.find({ isDeleted: "0" });
+  const users = await User.find({ is_deleted: "0" });
   res.json({ success: true, users });
 };
 
@@ -85,7 +80,7 @@ const updateUser = async (req, res) => {
     res.json({
       success: true,
       message: "User Updated Successfully",
-      user: updatedUser
+ 
     });
 
   } catch (err) {

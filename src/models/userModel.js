@@ -8,18 +8,17 @@ const userSchema = new mongoose.Schema(
 
     name: {
       type: String,
-      required: true,
-     
+      trim: true
     },
 
       last_name: {
         type: String,
+        trim: true
       },
     
 
     email: {
       type: String,
-      required: true,
       trim: true
       
     },
@@ -32,7 +31,6 @@ const userSchema = new mongoose.Schema(
 
     phone: {
   type: String,
-  match: /^[0-9]{10,15}$/,
 },
 
 role: {
@@ -40,9 +38,9 @@ role: {
   ref: "Role",
 },
     status: {
-      // type: Boolean,
+      
       type: String,
-      required: [true, "Please select a status"]
+
     },
 
     is_deleted: {
@@ -73,7 +71,7 @@ userSchema.methods.comparePassword = async function (password) {
 };
 
 userSchema.index({ email: 1 });
-// userSchema.index({ email: 1 }, { unique: true });
+
 
 
 const User = mongoose.model("User", userSchema, collectionName);

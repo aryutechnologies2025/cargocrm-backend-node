@@ -1,64 +1,94 @@
 import Beneficiary from "../models/beneficiaryModel.js";
 import { checkExistingRecord, handleValidationError } from "./baseController.js";
 
+const generateBeneficiaryId = async () => {
+  const lastCustomer = await Beneficiary.findOne()
+    .sort({ createdAt: -1 })
+    .select("beneficiary_id");
+
+  if (!lastCustomer || !lastCustomer.beneficiary_id) {
+    return "bene-0001";
+  }
+
+  const lastNumber = parseInt(
+    lastCustomer.beneficiary_id.split("-")[1],
+    10
+  );
+
+  const nextNumber = lastNumber + 1;
+
+  return `bene-${String(nextNumber).padStart(4, "0")}`;
+};
+
  const addBeneficiary = async (req, res) => {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ success: false, message: "Data is required" });
+      return res.json({ success: false, message: "Data is required" });
     }
 
-    const { name, email, phone, address, status } = req.body;
+    const { name, email, phone, address,city,country, status,created_by } = req.body;
 
     // Check if email already exists
-    const emailExists = await checkExistingRecord(Beneficiary, { email }, "email", res);
-    if (emailExists) return;
+      const emailExists = await Beneficiary.findOne({ email });
+    if (emailExists) {
+      return res.json({
+        success: false,
+        message: "Email already exists"
+      });
+    }
+
+       //  Generate beneficiaryId
+    const beneficiary_id = await generateBeneficiaryId();
 
     const beneficiary = new Beneficiary({
+      beneficiary_id,
       name,
       email,
       phone,
       address,
+      city,
+      country,
       status,
-      createdBy: req.user._id
+     created_by
     });
 
     await beneficiary.save();
-    res.status(201).json({ 
+    res.json({ 
       success: true, 
       message: "Beneficiary added successfully", 
-      data: beneficiary 
     });
 
-  } catch (error) {
-    console.log("error", error);
-    const validationError = handleValidationError(error, res);
-    if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }catch (error) {
+    console.error("ADD CUSTOMER ERROR:", error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
  const getBeneficiaries = async (req, res) => {
   try {
-    const beneficiaries = await Beneficiary.find({ status: "active" })
-      .populate("createdBy", "name email");
-    res.status(200).json({ success: true, data: beneficiaries });
+    const beneficiaries = await Beneficiary.find({ is_deleted: "0" })
+      .populate("created_by", "name email");
+    res.json({ success: true, data: beneficiaries });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
  const getBeneficiaryById = async (req, res) => {
   try {
     const beneficiary = await Beneficiary.findById(req.params.id)
-      .populate("createdBy", "name email");
+      .populate("created_by", "name email");
     
     if (!beneficiary) {
-      return res.status(404).json({ success: false, message: "Beneficiary not found" });
+      return res.json({ success: false, message: "Beneficiary not found" });
     }
     
-    res.status(200).json({ success: true, data: beneficiary });
+    res.json({ success: true, data: beneficiary });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message:error.message || "Internal Server Error" });
   }
 };
 
@@ -68,7 +98,7 @@ import { checkExistingRecord, handleValidationError } from "./baseController.js"
     
     const beneficiary = await Beneficiary.findById(id);
     if (!beneficiary) {
-      return res.status(404).json({ success: false, message: "Beneficiary not found" });
+      return res.json({ success: false, message: "Beneficiary not found" });
     }
 
     const { email } = req.body;
@@ -87,33 +117,33 @@ import { checkExistingRecord, handleValidationError } from "./baseController.js"
       runValidators: true
     });
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       message: "Beneficiary updated successfully", 
-      data: updated 
+
     });
   } catch (error) {
     console.log("error", error);
     const validationError = handleValidationError(error, res);
     if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
  const deleteBeneficiary = async (req, res) => {
+  const { id } = req.params;
   try {
-    const beneficiary = await Beneficiary.findById(req.params.id);
-    
-    if (!beneficiary) {
-      return res.status(404).json({ success: false, message: "Beneficiary not found" });
+    const beneficiaryDetails = await Beneficiary.findByIdAndUpdate(
+      id,
+      { is_deleted: 1 },
+      { new: true }
+    );
+    if (!beneficiaryDetails) {
+      return res.json({ success: false, message: "Benerficiary Not Found" });
     }
-
-    beneficiary.status = "inactive";
-    await beneficiary.save();
-
-    res.status(200).json({ success: true, message: "Beneficiary deactivated successfully" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: true, message: "Beneficiary deleted successfully" });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
   }
 };
 
