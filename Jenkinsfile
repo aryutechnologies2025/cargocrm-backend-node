@@ -14,11 +14,20 @@ pipeline {
             }
         }
 
+        stage('Deploy Code to Production') {
+            steps {
+                sh '''
+                echo "Syncing code to production directory..."
+                rsync -av --delete --exclude=node_modules --exclude=.env ./ $APP_DIR/
+                '''
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
                 sh '''
                 cd $APP_DIR
-                npm ci
+                npm ci --omit=dev
                 '''
             }
         }
@@ -27,9 +36,13 @@ pipeline {
             steps {
                 sh '''
                 cd $APP_DIR
-                pm2 describe cargo-backend > /dev/null 2>&1 \
-                && pm2 restart cargo-backend \
-                || pm2 start src/server.js --name cargo-backend
+
+                if pm2 describe cargo-backend > /dev/null
+                then
+                    pm2 restart cargo-backend --update-env
+                else
+                    pm2 start src/server.js --name cargo-backend
+                fi
 
                 pm2 save
                 '''
