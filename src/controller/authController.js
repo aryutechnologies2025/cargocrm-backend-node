@@ -3,8 +3,9 @@ import User from "../models/userModel.js";
 
  import crypto from "crypto";
  import bcrypt from 'bcrypt';
-import Login from "../models/AdminModel.js";
+
 import LoginLog from "../models/loginLogModel.js";
+import Login from "../models/adminModel.js";
 
 
 
@@ -17,13 +18,24 @@ const { email, password } = req.body;
 
     console.log("Login attempt for email:", email);
 
+   //  Check user exists
     const user = await Login.findOne({ email }).select("+password");
-
-
-   const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(200).json({success:"false", password: 'Invalid password' });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password"
+      });
     }
+  
+    //  Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password"
+      });
+    }
+
 
     // Generate JWT
      const token = jwt.sign(
