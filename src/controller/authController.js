@@ -6,13 +6,14 @@ import User from "../models/userModel.js";
 
 import LoginLog from "../models/loginLogModel.js";
 import Login from "../models/adminModel.js";
+import e from "express";
 
 
 
 
 //login
 const loginUser = async (req, res) => {
-  console.log("🔥 NEW LOGIN CONTROLLER HIT 🔥");
+console.log("LOGIN BODY:", req.body);
 
   try {
 
@@ -21,7 +22,11 @@ const { email, password } = req.body;
     console.log("Login attempt for email:", email);
 
    //  Check user exists
-    const user = await Login.findOne({ email }).select("+password");
+    const user = await User
+      .findOne({ email })
+      .select("+password")
+      .populate("role", "name");
+    console.log("USER FROM DB:", user);
     if (!user) {
       return res.json({
         success: false,
@@ -29,6 +34,7 @@ const { email, password } = req.body;
       });
     }
   
+    console.log("USER FROM DB:", user);
     //  Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -42,7 +48,7 @@ const { email, password } = req.body;
     // Generate JWT
      const token = jwt.sign(
       { id: user._id, 
-        role: user.role 
+        role: user?.role?.name || "",
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
@@ -50,7 +56,7 @@ const { email, password } = req.body;
 
        // Save login log
     await LoginLog.create({
-      name: user.name,
+      name: user?.name || "",
       ip: req.ip,
       loginTime: new Date(),
       createdBy: user._id
@@ -70,9 +76,9 @@ const { email, password } = req.body;
       token,
       user: {
         id: user._id,
-        firstName: user.name,
+        firstName: user?.name || "",
         email: user.email,
-        // role: user.role
+        role: user?.role?.name || ""
       }
     });
 
@@ -88,7 +94,7 @@ const { email, password } = req.body;
 
  const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password,role } = req.body;
 
     // Validate required fields
     if (!name || !email || !password) {
@@ -105,16 +111,16 @@ const { email, password } = req.body;
       });
     }
 
-    const exists = await Login.findOne({ email });
+    const exists = await User.findOne({ email });
     if (exists) {
       return res.json({ message: "Email Already Exists" });
     }
 
-    const user = await Login.create({
+    const user = await User.create({
       name,
       email,
       password,   // auto-hashed by pre-save hook
-    
+      role
     });
 
     res.json({
@@ -127,21 +133,9 @@ const { email, password } = req.body;
       
       }
     });
-  } catch (err) {
-    console.error("Registration error details:", err);
-    
-    // Handle mongoose validation errors
-    if (err.name === "ValidationError") {
-      return res.json({ 
-        message: "Validation error", 
-        errors: Object.values(err.errors).map(e => e.message)
-      });
-    }
-    
-    res.json({ 
-      message: "Registration failed",
-      error: err.message 
-    });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
 
@@ -184,7 +178,7 @@ const { email, password } = req.body;
     });
 
   } catch (error) {
-    res.json({ message: "Forgot password failed" });
+    res.json({ message: error.message || "Forgot password failed" });
   }
 };
 
@@ -216,7 +210,7 @@ const { email, password } = req.body;
     res.json({ message: "Password reset successful" });
 
   } catch (error) {
-    res.json({ message: "Reset password failed" });
+    res.json({ message: error.message || "Reset password failed" });
   }
 };
 
@@ -227,7 +221,7 @@ const logoutUser = (req, res) => {
     secure: process.env.NODE_ENV === "development",
     sameSite: "strict",
   });
-  res.json({ message: "Logged out successfully" });
+  res.json({ message: error.message ||  "Logged out successfully" });
 };
 
 

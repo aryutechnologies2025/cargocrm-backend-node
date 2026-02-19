@@ -1,53 +1,36 @@
 import mongoose from "mongoose";
 
+const collectionName = "parcels";
 const parcelSchema = new mongoose.Schema({
-  parcel_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    auto: true,
-    required: true
-  },
+
   order_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
-    required: [true, "Please provide an order ID"],
-    validate: {
-      validator: async function(value) {
-        const order = await mongoose.model("Order").findById(value);
-        return order !== null;
-      },
-      message: "Invalid order ID"
-    }
+    trim: true
+    
   },
-  placeNumber: {
-    type: Number,
-    required: [true, "Please provide a place number"],
-    validate: {
-      validator: function(value) {
-        return value > 0;
-      },
-      message: "Place number must be greater than 0"
-    }
+  piece_number: {
+    type: String,
+
+   
   },
   weight: {
-    type: Number,
-    required: [true, "Please provide weight"],
-    validate: {
-      validator: function(value) {
-        return value > 0;
-      },
-      message: "Weight must be greater than 0 kg"
-    }
-  },
-  dimension: {
     type: String,
-    required: [true, "Please provide dimensions"],
-    trim: true,
-    validate: {
-      validator: function(value) {
-        return value.trim().length > 0;
-      },
-      message: "Dimensions cannot be empty"
-    }
+    trim: true
+   
+  },
+  
+  length: {
+    type: String,
+    trim: true
+  },
+  width: {
+    type: String,
+    trim: true
+  },
+  height: {
+    type: String,
+    trim: true
   },
   description: {
     type: String,
@@ -56,16 +39,17 @@ const parcelSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    required: [true, "Please select a status"],
-    enum: {
-      values: ["active", "inactive"],
-      message: "Status must be either active or inactive"
-    }
+  
   },
   
-  createdBy: {
+     is_deleted: {
+    type: String,
+    default: "0"
+  },
+  
+  created_by: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "LoginLog",
+    ref: "User",
     
     immutable: true
   }
@@ -75,5 +59,5 @@ const parcelSchema = new mongoose.Schema({
 
 parcelSchema.index({ order_id: 1 });
 
-const Parcel = mongoose.model("Parcel", parcelSchema);
+const Parcel = mongoose.model("Parcel", parcelSchema, collectionName);
 export default Parcel;

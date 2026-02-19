@@ -42,6 +42,10 @@ role: {
       type: String,
 
     },
+     is_hidden: {
+      type: Boolean,
+      default: false   // default to false for hidden
+    },
 
     is_deleted: {
     type: String,
@@ -50,7 +54,7 @@ role: {
 
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Login",
+      ref: "User",
       immutable: true
     },
     resetPasswordToken: String,
@@ -71,6 +75,7 @@ userSchema.methods.comparePassword = async function (password) {
 };
 
 userSchema.index({ email: 1 });
+userSchema.index({ role: 1 });
 
 
 

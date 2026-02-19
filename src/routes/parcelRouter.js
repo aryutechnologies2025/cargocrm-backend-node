@@ -9,10 +9,10 @@ import { addParcel,
 
 const parcelRouter = express.Router();
 
-parcelRouter.post("/create-parcel", addParcel);
+parcelRouter.post("/create-parcels", addParcel);
 parcelRouter.get("/view-parcels", getParcels);
 parcelRouter.get("/view-parcels/:id", getParcelById);
-parcelRouter.put("/edit-parcel/:id", editParcel);
-parcelRouter.delete("/delete-parcel/:id", deleteParcel);
+parcelRouter.put("/edit-parcels/:id", editParcel);
+parcelRouter.delete("/delete-parcels/:id", deleteParcel);
 
 export default parcelRouter;
