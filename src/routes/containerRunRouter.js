@@ -4,10 +4,10 @@ import { addContainerRun, deleteContainerRun, editContainerRun, getContainerRunB
 
 const containerRunRouter = express.Router();
 
-containerRunRouter.post("/create-containerRun", addContainerRun);
-containerRunRouter.get("/view-containerRuns", getContainerRuns);
-containerRunRouter.get("/view-containerRuns/:id", getContainerRunById);
-containerRunRouter.put("/edit-containerRun/:id", editContainerRun);
-containerRunRouter.delete("/delete-containerRun/:id", deleteContainerRun);
+containerRunRouter.post("/create-containerruns", addContainerRun);
+containerRunRouter.get("/view-containerruns", getContainerRuns);
+containerRunRouter.get("/view-containerruns/:id", getContainerRunById);
+containerRunRouter.put("/edit-containerruns/:id", editContainerRun);
+containerRunRouter.delete("/delete-containerruns/:id", deleteContainerRun);
 
 export default containerRunRouter;

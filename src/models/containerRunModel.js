@@ -4,7 +4,7 @@
 const containerRunSchema = new mongoose.Schema({
  
 
-runNumber: {
+run_number: {
   type: Number,
  trim: true,
 
@@ -26,7 +26,7 @@ runNumber: {
     default: "0"
   },
 
-  createdBy: {
+  created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     
@@ -36,7 +36,7 @@ runNumber: {
   timestamps: true
 });
 
-containerRunSchema.index({ runNumber: 1 }, { unique: true });
+containerRunSchema.index({ run_number: 1 });
 
 const ContainerRun = mongoose.model("ContainerRun", containerRunSchema);
 export default ContainerRun;

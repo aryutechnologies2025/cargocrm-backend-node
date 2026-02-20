@@ -1,159 +1,94 @@
 import ContainerRun from "../models/containerRunModel.js";
 import Event from "../models/eventModel.js";
+import Order from "../models/orderModel.js";
 import { handleValidationError } from "./baseController.js";
 
-// Generate automatic tracking number
-const generateTrackingNumber = async () => {
-  const lastEvent = await Event.findOne().sort({ trackingNumber: -1 });
-  const newNumber = lastEvent ? lastEvent.trackingNumber + 1 : 1000;
-  return newNumber;
-};
+
 
  const addEvent = async (req, res) => {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ success: false, message: "Data is required" });
+      return res.json({ success: false, message: "Data is required" });
     }
 
-    const { eventName, runNumber, quantity, weight, eventDate, eventTime, status } = req.body;
+    const { event_name, run_number,tracking_number, quantity, weight, event_date, event_time, status,created_by } = req.body;
 
-    // Verify container run exists and is active
-    const containerRun = await ContainerRun.findOne({ 
-      runNumber: parseInt(runNumber),
-      status: "active" 
-    });
-    
+const runNumber = parseInt(run_number);
+    const containerRun = await ContainerRun.findById(run_number);
+   
     if (!containerRun) {
-      return res.status(400).json({ 
+      return res.json({ 
         success: false, 
-        errors: { runNumber: "Invalid or inactive container run" } 
+        errors: { run_number: "Invalid  container run" } 
       });
     }
 
-    // Generate automatic tracking number
-    const trackingNumber = await generateTrackingNumber();
+    const trackingNumber = await Order.findById(tracking_number);
+
+    if (!trackingNumber) {
+      return res.json({ 
+        success: false, 
+        errors: { tracking_number: "Invalid tracking number" } 
+      });
+    }
 
     const event = new Event({
-      eventName,
-      runNumber,
-      trackingNumber,
+      event_name,
+      run_number,
+      tracking_number,
       quantity,
       weight,
-      eventDate,
-      eventTime,
+      event_date,
+      event_time,
       status,
-      createdBy: req.user._id
+      created_by
     });
 
     await event.save();
     
     await event.populate([
-      { path: "createdBy", select: "name email" }
+      { path: "created_by", select: "name email" }
     ]);
 
-    res.status(201).json({ 
+    res.json({ 
       success: true, 
       message: "Event added successfully", 
-      data: event 
+
     });
 
   } catch (error) {
-    console.log("error", error);
-    const validationError = handleValidationError(error, res);
-    if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error(error);
+    res.json({ success: false, message:error.message || "Internal Server Error" });
   }
 };
 
  const getEvents = async (req, res) => {
   try {
-    const events = await Event.find({ status: "active" })
-      .populate("createdBy", "name email")
-      .sort({ eventDate: -1, eventTime: -1 });
+    const events = await Event.find({ is_deleted: "0" })
+      .populate("created_by", "name email")
+      .sort({ event_date: -1, event_time: -1 });
       
-    res.status(200).json({ success: true, data: events });
+    res.json({ success: true, data: events });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
 
  const getEventById = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id)
-      .populate("createdBy", "name email");
+      .populate("created_by", "name email");
     
     if (!event) {
-      return res.status(404).json({ success: false, message: "Event not found" });
+      return res.json({ success: false, message: "Event not found" });
     }
     
-    res.status(200).json({ success: true, data: event });
+    res.json({ success: true, data: event });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
 
- const getEventsByRunNumber = async (req, res) => {
-  try {
-    const { runNumber } = req.params;
-    
-    const events = await Event.find({ 
-      runNumber: parseInt(runNumber),
-      status: "active" 
-    })
-      .populate("createdBy", "name email")
-      .sort({ eventDate: -1, eventTime: -1 });
-      
-    res.status(200).json({ success: true, data: events });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
-
- const getEventsByDateRange = async (req, res) => {
-  try {
-    const { startDate, endDate } = req.query;
-    
-    if (!startDate || !endDate) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Please provide startDate and endDate" 
-      });
-    }
-
-    const events = await Event.find({
-      eventDate: {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
-      },
-      status: "active"
-    })
-      .populate("createdBy", "name email")
-      .sort({ eventDate: -1, eventTime: -1 });
-      
-    res.status(200).json({ success: true, data: events });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
-
- const getEventsByTrackingNumber = async (req, res) => {
-  try {
-    const { trackingNumber } = req.params;
-    
-    const event = await Event.findOne({ 
-      trackingNumber: parseInt(trackingNumber),
-      status: "active" 
-    }).populate("createdBy", "name email");
-    
-    if (!event) {
-      return res.status(404).json({ success: false, message: "Event not found" });
-    }
-    
-    res.status(200).json({ success: true, data: event });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
 
  const editEvent = async (req, res) => {
   try {
@@ -161,106 +96,64 @@ const generateTrackingNumber = async () => {
     
     const event = await Event.findById(id);
     if (!event) {
-      return res.status(404).json({ success: false, message: "Event not found" });
+      return res.json({ success: false, message: "Event not found" });
     }
 
-    const { runNumber } = req.body;
+    const { run_number } = req.body;
     
-    // If run number is being updated, verify container run exists
-    if (runNumber && runNumber !== event.runNumber) {
-      const containerRun = await ContainerRun.findOne({ 
-        runNumber: parseInt(runNumber),
-        status: "active" 
-      });
+    // // If run number is being updated, verify container run exists
+    // if (run_number && run_number !== event.run_number) {
+    //   const containerRun = await ContainerRun.findOne({ 
+    //     run_number: parseInt(run_number),
+    //     status: "1" 
+    //   });
       
-      if (!containerRun) {
-        return res.status(400).json({ 
-          success: false, 
-          errors: { runNumber: "Invalid or inactive container run" } 
-        });
-      }
-    }
+    //   if (!containerRun) {
+    //     return res.json({ 
+    //       success: false, 
+    //       errors: { run_number: "Invalid or inactive container run" } 
+    //     });
+    //   }
+    // }
 
-    // Prevent updating tracking number as it's auto-generated
-    if (req.body.trackingNumber) {
-      delete req.body.trackingNumber;
-    }
+    // // Prevent updating tracking number as it's auto-generated
+    // if (req.body.tracking_number) {
+    //   delete req.body.tracking_number;
+    // }
 
     const updated = await Event.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true
-    }).populate("createdBy", "name email");
+    }).populate("created_by", "name email");
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       message: "Event updated successfully", 
-      data: updated 
+
     });
   } catch (error) {
-    console.log("error", error);
-    const validationError = handleValidationError(error, res);
-    if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error(error);
+    res.json({ success: false, message:error.message || "Internal Server Error" });
   }
 };
 
- const deleteEvent = async (req, res) => {
+const deleteEvent = async (req, res) => {
+  const { id } = req.params;
   try {
-    const event = await Event.findById(req.params.id);
-    
-    if (!event) {
-      return res.status(404).json({ success: false, message: "Event not found" });
+    const eventDetails = await Event.findByIdAndUpdate(
+      id,
+      { is_deleted: 1 },
+      { new: true }
+    );
+    if (!eventDetails) {
+      return res.json({ success: false, message: "Event Not Found" });
     }
-
-    event.status = "inactive";
-    await event.save();
-
-    res.status(200).json({ success: true, message: "Event deactivated successfully" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: true, message: "Event deleted successfully" });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
   }
 };
 
- const getEventStats = async (req, res) => {
-  try {
-    const stats = await Event.aggregate([
-      { $match: { status: "active" } },
-      {
-        $group: {
-          _id: null,
-          totalEvents: { $sum: 1 },
-          totalQuantity: { $sum: "$quantity" },
-          totalWeight: { $sum: "$weight" },
-          avgQuantity: { $avg: "$quantity" },
-          avgWeight: { $avg: "$weight" }
-        }
-      }
-    ]);
-
-    const runStats = await Event.aggregate([
-      { $match: { status: "active" } },
-      {
-        $group: {
-          _id: "$runNumber",
-          eventCount: { $sum: 1 },
-          totalQuantity: { $sum: "$quantity" },
-          totalWeight: { $sum: "$weight" }
-        }
-      },
-      { $sort: { runNumber: 1 } }
-    ]);
-
-    res.status(200).json({ 
-      success: true, 
-      data: {
-        overall: stats[0] || { totalEvents: 0, totalQuantity: 0, totalWeight: 0 },
-        byRun: runStats
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
 
 export {
   addEvent,
@@ -268,7 +161,5 @@ export {
   getEventById,
   editEvent,
   deleteEvent,
-  getEventStats,getEventsByTrackingNumber,
-  getEventsByRunNumber,
-  getEventsByDateRange
+  
 };

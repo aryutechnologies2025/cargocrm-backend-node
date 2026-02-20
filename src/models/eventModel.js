@@ -3,37 +3,35 @@ import mongoose from "mongoose";
 const collectionName = "events";
 const eventSchema = new mongoose.Schema({
 
-  eventName: {
+  event_name: {
     type: String,
    
     trim: true,
    
   },
-  runNumber: {
-    type: Number,
-    trim: true
-    
+  run_number: {
+ type: mongoose.Schema.Types.ObjectId,
+    ref: "ContainerRun",
   },
 
 
-trackingNumber: {
-  type: Number,
-  trim: true,
-  required: true
+tracking_number: {
+   type: mongoose.Schema.Types.ObjectId,
+    ref: "Order",
 },
   quantity: {
     type: Number,
 trim: true
   },
   weight: {
-    type: Number,
+    type: String,
   trim: true
   },
-  eventDate: {
+  event_date: {
     type: Date,
    trim: true
   },
-  eventTime: {
+  event_time: {
     type: String,
    
   },
@@ -46,7 +44,7 @@ trim: true
     default: "0"
   },
   
-  createdBy: {
+  created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     immutable: true
@@ -56,8 +54,8 @@ trim: true
   timestamps: true
 });
 
-eventSchema.index({ eventName: 1 });
-eventSchema.index({ trackingNumber: 1 }, { unique: true });
+eventSchema.index({ event_name: 1 });
+eventSchema.index({ tracking_number: 1 });
 
 const Event = mongoose.model("Event", eventSchema,collectionName);
 export default Event;

@@ -5,7 +5,7 @@ import User from "../models/userModel.js";
  import bcrypt from 'bcrypt';
 
 import LoginLog from "../models/loginLogModel.js";
-import Login from "../models/adminModel.js";
+
 import e from "express";
 
 

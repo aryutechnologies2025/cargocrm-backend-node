@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-// import app from "./app.js";
+
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -51,7 +51,7 @@ app.use("/api/customers",useAuth, customerRouter);
 app.use("/api/beneficiary",useAuth, beneficiaryRouter);
 app.use("/api/orders",useAuth, orderRouter);
 app.use("/api/parcels",useAuth, parcelRouter);
-app.use("/api/containerRuns",useAuth, containerRunRouter);
+app.use("/api/containerruns",useAuth, containerRunRouter);
 app.use("/api/events",useAuth, eventRouter);
 app.use("/api/contacts",useAuth, contactUsRouter);
 
