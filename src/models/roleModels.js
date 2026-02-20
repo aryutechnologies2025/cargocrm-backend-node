@@ -20,7 +20,8 @@ const role = new mongoose.Schema({
 
 created_by: {
   type: mongoose.Schema.Types.ObjectId,
-  ref: "Login",
+  ref: "User",
+  immutable: true
 
 }
 

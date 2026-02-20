@@ -34,7 +34,7 @@ const customerSchema = new mongoose.Schema({
   },
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Admin",
+    ref: "User",
     immutable: true
   }
 }, {
@@ -44,6 +44,7 @@ const customerSchema = new mongoose.Schema({
 
 customerSchema.index({ name: 1 }); // Regular index instead of hashed
 customerSchema.index({ email: 1 }, { unique: true });
+
 
 const Customer = mongoose.model("Customer", customerSchema, collectionName);
 export default Customer;

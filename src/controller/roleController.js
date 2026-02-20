@@ -1,4 +1,5 @@
 
+import e from 'express';
 import Role from '../models/roleModels.js';
 
 const addRole = async (req, res) => {
@@ -12,7 +13,7 @@ const addRole = async (req, res) => {
 
   const { name, status,createdBy } = req.body;
   // Check if role already exists
-  const existingRole = await Role.findOne({ name });
+  const existingRole = await Role.findOne({ name, is_deleted: "0" });
   if (existingRole) {         
     return res.json({ success: false, errors: { name: "Role Already Exists" } });
   }
@@ -35,7 +36,7 @@ const addRole = async (req, res) => {
       res.json({ success: false, error: "Internal Server Error" });
     }
     console.log("error",error);
-    return res.json({success:false,message:"Internal Server Error"});
+    return res.json({success:false,message:error.message || "Internal Server Error"});
   }
  
 };

@@ -7,18 +7,19 @@ const generateCustomerId = async () => {
     .sort({ createdAt: -1 })
     .select("customer_id");
 
-  if (!lastCustomer || !lastCustomer.customer_id) {
-    return "custom-0001";
+  // First customer
+  if (
+    !lastCustomer ||
+    !lastCustomer.customer_id ||
+    isNaN(Number(lastCustomer.customer_id))
+  ) {
+    return "00001";
   }
 
-  const lastNumber = parseInt(
-    lastCustomer.customer_id.split("-")[1],
-    10
-  );
-
+  const lastNumber = Number(lastCustomer.customer_id);
   const nextNumber = lastNumber + 1;
 
-  return `custom-${String(nextNumber).padStart(4, "0")}`;
+  return String(nextNumber).padStart(5, "0");
 };
 
 
@@ -110,11 +111,9 @@ const generateCustomerId = async () => {
     });
 
     res.json({ success: true, message: "Customer updated successfully"});
-  } catch (error) {
-    console.log("error", error);
-    const validationError = handleValidationError(error, res);
-    if (validationError) return;
-    res.json({ success: false, message: "Internal Server Error" });
+  }catch (error) {
+    console.error(error);
+    res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
 

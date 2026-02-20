@@ -4,16 +4,19 @@ const collectionName = "orders";
 const orderSchema = new mongoose.Schema({
   tracking_number: {
     type: String,
-    unique: true
+    unique: true,
+    trim: true
   },
   sender_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
+    trim: true
     
   },
   beneficiary_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Beneficiary",
+    trim: true
   },
   cargo_mode: {
     type: String,
@@ -33,7 +36,7 @@ const orderSchema = new mongoose.Schema({
 
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Admin",
+    ref: "User",
     immutable: true
   }
 }, {

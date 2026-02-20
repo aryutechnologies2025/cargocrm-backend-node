@@ -1,7 +1,7 @@
 import express from "express";
 
 
-import { addEvent, deleteEvent, editEvent, getEventById, getEvents, getEventsByDateRange, getEventsByRunNumber, getEventsByTrackingNumber, getEventStats } from "../controller/eventController.js";
+import { addEvent, deleteEvent, editEvent, getEventById, getEvents } from "../controller/eventController.js";
 import useAuth from "../middlewares/authMiddleware.js";
 
 const eventRouter = express.Router();
@@ -10,16 +10,12 @@ const eventRouter = express.Router();
 // eventRouter.use(useAuth);
 
 
-eventRouter.post("/create-event" , addEvent);
+eventRouter.post("/create-events" , addEvent);
 eventRouter.get("/view-events" , getEvents);
-eventRouter.get("/view-event/:id" , getEventById);
-eventRouter.put("/edit-event/:id" , editEvent);
-eventRouter.delete("/delete-event/:id" , deleteEvent);
+eventRouter.get("/view-events/:id" , getEventById);
+eventRouter.put("/edit-events/:id" , editEvent);
+eventRouter.delete("/delete-events/:id" , deleteEvent);
 
-// Additional query routes
-eventRouter.get("/by-run/:runNumber", getEventsByRunNumber);
-eventRouter.get("/by-date-range", getEventsByDateRange);
-eventRouter.get("/by-tracking/:trackingNumber", getEventsByTrackingNumber);
-eventRouter.get("/statistics", getEventStats);
+
 
 export default eventRouter;

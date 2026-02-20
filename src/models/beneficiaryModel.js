@@ -43,7 +43,7 @@ trim: true
 
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Admin",
+    ref: "User",
     immutable: true
   }
 }, {

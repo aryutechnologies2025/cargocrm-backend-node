@@ -1,3 +1,4 @@
+import Role from "../models/roleModels.js";
 import User from "../models/userModel.js";
 import bcrypt from "bcrypt";
 
@@ -11,6 +12,8 @@ import bcrypt from "bcrypt";
     }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+
+  
 
     const user = await User.create({
       name,
@@ -27,17 +30,65 @@ import bcrypt from "bcrypt";
       message: "User created successfully",
     });
   } catch (err) {
-    res.json({ message: err.message });
+    res.json({ message: err.message || "Internal Server Error" });
   }
 };
 
  const getAllUsers = async (req, res) => {
-  const users = await User.find({ is_deleted: "0" });
-  res.json({ success: true, users });
+   const superAdminRole = await Role.findOne({ role: "superadmin" });
+ const users = await User.find({
+  role: { $ne: superAdminRole?._id },
+  is_deleted: "0"
+}).populate("role", "name");
+  const role=await Role.find({}).select("name");
+  res.json({ success: true, users:users,role:role });
 };
 
+// const getAllUsers = async (req, res) => {
+//   try {
+
+//      const superAdminRole = await Role.findOne({ name: "superadmin" });
+
+//     const users = await User.find({role: { $ne: superAdminRole?._id }, is_deleted: "0" })
+//       .populate("role", "name")
+//       .select("name email role status createdAt updatedAt");
+
+//     const roles = await Role.find({})
+//       .select("name");
+
+//     const formattedUsers = users.map(user => ({
+//       id: user._id,
+//       name: user.name,
+//       email: user.email,
+//       role: user.role ? user.role.name : null,
+//       status: user.status,
+//       createdAt: user.createdAt,
+//       updatedAt: user.updatedAt
+//     }));
+
+//     const formattedRoles = roles.map(role => ({
+//       id: role._id,
+//       name: role.name
+//     }));
+
+//     res.json({
+//       success: true,
+//       users: formattedUsers,
+//       roles: formattedRoles
+//     });
+//   } catch (error) {
+//     res.json({
+//       success: false,
+//       message: "Failed to fetch users",
+//       error: error.message
+//     });
+//   }
+// };
+
+
 const getUserById = async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const user = await User.findById(req.params.id).populate("role", "name");
+
   res.json({ success: true, user });
 }
 
@@ -87,7 +138,7 @@ const updateUser = async (req, res) => {
     console.error("UPDATE USER ERROR:", err);
     res.json({
       success: false,
-      message: err.message
+      message: err.message || "Internal Server Error"
     });
   }
 };
@@ -98,7 +149,7 @@ const updateUser = async (req, res) => {
   try {
     const userDetails = await User.findByIdAndUpdate(
       id,
-      { isDeleted: 1 },
+      { is_deleted: 1 },
       { new: true }
     );
     if (!userDetails) {
@@ -106,7 +157,7 @@ const updateUser = async (req, res) => {
     }
     res.json({ success: true, message: "User deleted successfully" });
   } catch (err) {
-    res.json({ success: false, error: err.message });
+    res.json({ success: false, error: err.message || "Internal Server Error" });
   }
 };
 

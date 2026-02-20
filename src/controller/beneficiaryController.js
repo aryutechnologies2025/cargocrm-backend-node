@@ -10,14 +10,19 @@ const generateBeneficiaryId = async () => {
     return "bene-0001";
   }
 
-  const lastNumber = parseInt(
-    lastCustomer.beneficiary_id.split("-")[1],
-    10
-  );
+ // First customer
+  if (
+    !lastCustomer ||
+    !lastCustomer.beneficiary_id ||
+    isNaN(Number(lastCustomer.beneficiary_id))
+  ) {
+    return "00001";
+  }
 
+   const lastNumber = Number(lastCustomer.beneficiary_id);
   const nextNumber = lastNumber + 1;
 
-  return `bene-${String(nextNumber).padStart(4, "0")}`;
+   return String(nextNumber).padStart(5, "0");
 };
 
  const addBeneficiary = async (req, res) => {
@@ -123,10 +128,8 @@ const generateBeneficiaryId = async () => {
 
     });
   } catch (error) {
-    console.log("error", error);
-    const validationError = handleValidationError(error, res);
-    if (validationError) return;
-    res.json({ success: false, message: "Internal Server Error" });
+    console.error(error);
+    res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
 
