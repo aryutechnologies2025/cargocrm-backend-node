@@ -55,11 +55,11 @@ const { email, password } = req.body;
     );
 
        // Save login log
-    await LoginLog.create({
+   const loginLog = await LoginLog.create({
       name: user?.name || "",
       ip: req.ip,
-      loginTime: new Date(),
-      createdBy: user._id
+      login_time: new Date(),
+      created_by: user._id
     });
 
     // Set cookie
@@ -78,7 +78,9 @@ const { email, password } = req.body;
         id: user._id,
         firstName: user?.name || "",
         email: user.email,
-        role: user?.role?.name || ""
+        role: user?.role?.name || "",
+        log_id: loginLog._id
+
       }
     });
 
@@ -215,13 +217,23 @@ const { email, password } = req.body;
 };
 
 
-const logoutUser = (req, res) => {
+const logoutUser = async(req, res) => {
+const { id } = req.body;
+  try {
+ 
+  const logout = await   LoginLog.updateOne({ _id: id }, { $set: { logout_time: new Date() } });
+
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "development",
+    // secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
   });
-  res.json({ message: error.message ||  "Logged out successfully" });
+  res.json( { message: "Logged out successfully" } );
+  } catch (error) {
+    res.json({ message: error.message || "Logout failed" });
+  }
+ 
 };
 
 

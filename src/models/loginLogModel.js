@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const collectionName = "loginlogs";
+
 const loginLogSchema = new mongoose.Schema(
   {
 
@@ -36,6 +36,6 @@ trim: true
 );
 
 loginLogSchema.index({createdAt: -1 });
-const LoginLog = mongoose.model("LoginLog", loginLogSchema, collectionName);
+const Loginlog = mongoose.model("LoginLog", loginLogSchema);
 
-export default LoginLog;
+export default Loginlog;
