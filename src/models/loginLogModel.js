@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const collectionName = "loginLogs";
+const collectionName = "loginlogs";
 const loginLogSchema = new mongoose.Schema(
   {
 
@@ -12,6 +12,11 @@ trim: true
     login_time: {
       type: Date,
       default: Date.now
+    },
+
+    logout_time: {
+      type: Date,
+      default: null
     },
 
     ip: {
