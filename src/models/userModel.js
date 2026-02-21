@@ -11,11 +11,6 @@ const userSchema = new mongoose.Schema(
       trim: true
     },
 
-      last_name: {
-        type: String,
-        trim: true
-      },
-    
 
     email: {
       type: String,

@@ -91,12 +91,53 @@ const createOrder = async (req, res) => {
       .populate("beneficiary_id", "name email phone")
       .populate("created_by", "name email")
       .sort({ createdAt: -1 });
-      
-    res.json({ success: true, data: orders });
+    const customerDetails = await Customer.find({ is_deleted: "0" });
+    const formattedOrders = orders.map((order) => ({
+      id: order._id,
+      tracking_number: order.tracking_number,
+      sender_id: order.sender_id?.name,
+      beneficiary_id: order.beneficiary_id?.name,
+      cargo_mode: order.cargo_mode,
+      packed: order.packed,
+      status: order.status,
+      created_by: order?.created_by?.name
+    }));
+    const formattedCustomers = customerDetails.map((customer) => ({
+      id: customer._id,
+      name: customer?.name,
+    }));
+    const responseData = {
+      success: true,
+      data: formattedOrders,
+      customer: formattedCustomers,
+    };
+
+    const encodedData = Buffer.from(
+      JSON.stringify(responseData)
+    ).toString("base64");
+
+    return res.status(200).json({
+      success: true,
+      encoded: true,
+      data: encodedData,
+    });
   } catch (error) {
     res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
+
+const getSenderByBeneficiary = async (req, res) => {
+  const {customerId} = req.query;
+  try{
+    const Beneficiary = await Customer.findById(customerId);
+    if(!Beneficiary){
+      return res.json({ success: false, message: "Beneficiary not found" });
+    }
+    res.json({ success: true, data: Beneficiary });
+  }catch(error){
+    res.json({ success: false, message: error.message || "Internal Server Error" });
+  }
+}
 
  const getOrderById = async (req, res) => {
   try {
@@ -160,7 +201,7 @@ const createOrder = async (req, res) => {
       return res.json({ success: false, message: "Order not found" });
     }
 
-    // If updating references, verify they exist
+    
     const { sender_id, beneficiary_id } = req.body;
     
     if (sender_id && sender_id !== order.sender_id.toString()) {
@@ -222,4 +263,4 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-export { createOrder, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };
+export { createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };

@@ -10,13 +10,13 @@ const orderSchema = new mongoose.Schema({
   sender_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
-    trim: true
+ 
     
   },
   beneficiary_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Beneficiary",
-    trim: true
+
   },
   cargo_mode: {
     type: String,

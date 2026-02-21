@@ -6,7 +6,7 @@ import User from "../models/userModel.js";
 
 import LoginLog from "../models/loginLogModel.js";
 
-import e from "express";
+import express from "express";
 
 
 
@@ -99,8 +99,8 @@ const { email, password } = req.body;
     // Validate required fields
     if (!name || !email || !password) {
       return res.json({ 
-        message: "Missing required fields",
-        required: ["firstName", "email", "password"]
+        message: "Name, Email and Password are required",
+        // required: ["firstName", "email", "password"]
       });
     }
 

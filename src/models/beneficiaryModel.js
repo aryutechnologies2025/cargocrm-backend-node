@@ -2,18 +2,22 @@ import mongoose from "mongoose";
 
 const collectionName = "beneficiaries";
 const beneficiarySchema = new mongoose.Schema({
+  customerId:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Customer",
+  },
   beneficiary_id: {
     type: String,
     unique: true
   },
   name: {
     type: String,
-     trim: true
+    trim: true
   },
   email: {
     type: String,
-trim: true
-    
+    trim: true
+
   },
   phone: {
     type: String,
@@ -21,22 +25,22 @@ trim: true
   },
   address: {
     type: String,
-    
+
   },
   city: {
-    type: String,    
+    type: String,
   },
- 
+
   country: {
     type: String,
-   
+
   },
   status: {
     type: String,
 
   },
 
-      is_deleted: {
+  is_deleted: {
     type: String,
     default: "0"
   },

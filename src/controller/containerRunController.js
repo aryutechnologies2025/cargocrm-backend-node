@@ -5,9 +5,9 @@ import { checkExistingRecord, handleValidationError } from "./baseController.js"
 
  const addContainerRun = async (req, res) => {
   try {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.json({ success: false, message: "Data is required" });
-    }
+    // if (!req.body || Object.keys(req.body).length === 0) {
+    //   return res.json({ success: false, message: "Data is required" });
+    // }
 
     const { run_number, mode, status,created_by } = req.body;
 

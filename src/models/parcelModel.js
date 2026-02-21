@@ -7,19 +7,16 @@ const parcelSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
     trim: true
-    
+
   },
   piece_number: {
     type: String,
-
-   
   },
   weight: {
     type: String,
     trim: true
-   
   },
-  
+
   length: {
     type: String,
     trim: true
@@ -39,18 +36,18 @@ const parcelSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-  
+
   },
-  
-     is_deleted: {
+
+  is_deleted: {
     type: String,
     default: "0"
   },
-  
+
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    
+
     immutable: true
   }
 }, {

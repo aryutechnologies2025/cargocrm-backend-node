@@ -44,7 +44,10 @@ const addRole = async (req, res) => {
 const getRole = async (req, res) => {
   // const data = await Role.find();
   const data = await Role.find({  is_deleted: "0" });
-  res.json({success:true,data});
+  const encodedData = Buffer.from(
+      JSON.stringify(data)
+    ).toString("base64");
+  res.json({success:true,data:encodedData});
 };
 
 const getRoleById = async (req, res) => {

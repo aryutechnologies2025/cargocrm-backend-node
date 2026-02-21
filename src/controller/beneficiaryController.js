@@ -1,4 +1,5 @@
 import Beneficiary from "../models/beneficiaryModel.js";
+import Customer from "../models/customerModel.js";
 import { checkExistingRecord, handleValidationError } from "./baseController.js";
 
 const generateBeneficiaryId = async () => {
@@ -25,13 +26,13 @@ const generateBeneficiaryId = async () => {
    return String(nextNumber).padStart(5, "0");
 };
 
- const addBeneficiary = async (req, res) => {
+const addBeneficiary = async (req, res) => {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.json({ success: false, message: "Data is required" });
     }
 
-    const { name, email, phone, address,city,country, status,created_by } = req.body;
+    const {customerId, name, email, phone, address,city,country, status,created_by } = req.body;
 
     // Check if email already exists
       const emailExists = await Beneficiary.findOne({ email });
@@ -46,6 +47,7 @@ const generateBeneficiaryId = async () => {
     const beneficiary_id = await generateBeneficiaryId();
 
     const beneficiary = new Beneficiary({
+      customerId,
       beneficiary_id,
       name,
       email,
@@ -72,13 +74,55 @@ const generateBeneficiaryId = async () => {
   }
 };
 
- const getBeneficiaries = async (req, res) => {
+const getBeneficiaries = async (req, res) => {
   try {
     const beneficiaries = await Beneficiary.find({ is_deleted: "0" })
-      .populate("created_by", "name email");
-    res.json({ success: true, data: beneficiaries });
+      .populate("created_by", "name email")
+      .populate("customerId", "name");
+
+    const customerDetails = await Customer.find({ is_deleted: "0" });
+
+    const formattedBeneficiaries = beneficiaries.map((beneficiary) => ({
+      id: beneficiary._id,
+      beneficiary_id: beneficiary.beneficiary_id,
+      customerId: beneficiary.customerId?.name,
+      name: beneficiary.name,
+      email: beneficiary.email,
+      phone: beneficiary.phone,
+      address: beneficiary.address,
+      city: beneficiary.city,
+      country: beneficiary.country,
+      status: beneficiary.status,
+      created_by: beneficiary?.created_by?.name,
+    }));
+
+    const formattedCustomers = customerDetails.map((customer) => ({
+      id: customer._id,
+      name: customer?.name,
+    }));
+
+    const responseData = {
+      success: true,
+      data: formattedBeneficiaries,
+      customer: formattedCustomers,
+    };
+
+    const encodedData = Buffer.from(
+      JSON.stringify(responseData)
+    ).toString("base64");
+
+    return res.status(200).json({
+      success: true,
+      encoded: true,
+      data: encodedData,
+    });
+
   } catch (error) {
-    res.json({ success: false, message: "Internal Server Error" });
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
