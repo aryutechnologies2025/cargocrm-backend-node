@@ -18,6 +18,7 @@ import containerRunRouter from "./routes/containerRunRouter.js";
 import eventRouter from "./routes/eventRouter.js";
 import contactUsRouter from "./routes/contactUsRouter.js";
 import userRouter from "./routes/userRoutes.js";
+import loginLogRouter from "./routes/loginLogRoutes.js";
 
 
 dotenv.config(); // Load environment variables
@@ -54,6 +55,7 @@ app.use("/api/parcels",useAuth, parcelRouter);
 app.use("/api/containerruns",useAuth, containerRunRouter);
 app.use("/api/events",useAuth, eventRouter);
 app.use("/api/contacts",useAuth, contactUsRouter);
+app.use("/api/logs",useAuth, loginLogRouter);
 
 
 //  Test Route
