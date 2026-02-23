@@ -5,10 +5,10 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
  const addContactMessage = async (req, res) => {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ success: false, message: "Data is required" });
+      return res.json({ success: false, message: "Data is required" });
     }
 
-    const { name, email, message, status } = req.body;
+    const { name, email, message, status,created_by } = req.body;
 
     // Check if email already exists
     const emailExists = await checkExistingRecord(ContactUs, { email }, "email", res);
@@ -18,8 +18,8 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
       name,
       email,
       message,
-      status: status || "active",
-      createdBy: req.user._id
+      status,
+      created_by
     });
 
     await contactMessage.save();
@@ -27,7 +27,7 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     // Populate createdBy for response
     await contactMessage.populate("createdBy", "name email");
 
-    res.status(201).json({ 
+    res.json({ 
       success: true, 
       message: "Contact message sent successfully", 
       data: contactMessage 
@@ -37,14 +37,14 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     console.log("error", error);
     const validationError = handleValidationError(error, res);
     if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
 // Get all active contact messages
  const getContactMessages = async (req, res) => {
   try {
-    const { status, startDate, endDate, page = 1, limit = 10 } = req.query;
+    const { status, start_date, end_date, page = 1, limit = 10 } = req.query;
     
     let query = {};
     
@@ -54,27 +54,27 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     }
     
     // Filter by date range
-    if (startDate || endDate) {
+    if (start_date || end_date) {
       query.createdAt = {};
-      if (startDate) {
-        query.createdAt.$gte = new Date(startDate);
+      if (start_date) {
+        query.createdAt.$gte = new Date(start_date);
       }
-      if (endDate) {
-        query.createdAt.$lte = new Date(endDate);
+      if (end_date) {
+        query.createdAt.$lte = new Date(end_date);
       }
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const messages = await ContactUs.find(query)
-      .populate("createdBy", "name email")
+      .populate("created_by", "name email")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
     const total = await ContactUs.countDocuments(query);
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       data: messages,
       pagination: {
@@ -84,7 +84,7 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -92,15 +92,15 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
  const getContactMessageById = async (req, res) => {
   try {
     const message = await ContactUs.findById(req.params.id)
-      .populate("createdBy", "name email");
+      .populate("created_by", "name email");
     
     if (!message) {
-      return res.status(404).json({ success: false, message: "Contact message not found" });
+      return res.json({ success: false, message: "Contact message not found" });
     }
     
-    res.status(200).json({ success: true, data: message });
+    res.json({ success: true, data: message });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -113,12 +113,12 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
       email: email.toLowerCase(),
       status: "active" 
     })
-      .populate("createdBy", "name email")
+      .populate("created_by", "name email")
       .sort({ createdAt: -1 });
       
-    res.status(200).json({ success: true, data: messages });
+    res.json({ success: true, data: messages });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -129,7 +129,7 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     
     const message = await ContactUs.findById(id);
     if (!message) {
-      return res.status(404).json({ success: false, message: "Contact message not found" });
+      return res.json({ success: false, message: "Contact message not found" });
     }
 
     const { email } = req.body;
@@ -148,9 +148,9 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     const updated = await ContactUs.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true
-    }).populate("createdBy", "name email");
+    }).populate("created_by", "name email");
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       message: "Contact message updated successfully", 
       data: updated 
@@ -159,27 +159,28 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     console.log("error", error);
     const validationError = handleValidationError(error, res);
     if (validationError) return;
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
 // Delete/Deactivate contact message
- const deleteContactMessage = async (req, res) => {
+const deleteContactMessage = async (req, res) => {
+  const { id } = req.params;
   try {
-    const message = await ContactUs.findById(req.params.id);
-    
-    if (!message) {
-      return res.status(404).json({ success: false, message: "Contact message not found" });
+    const contactDetails = await ContainerRun.findByIdAndUpdate(
+      id,
+      { is_deleted: 1 },
+      { new: true }
+    );
+    if (!contactDetails) {
+      return res.json({ success: false, message: "Contact Not Found" });
     }
-
-    message.status = "inactive";
-    await message.save();
-
-    res.status(200).json({ success: true, message: "Contact message deactivated successfully" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: true, message: "Contact deleted successfully" });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
   }
 };
+
 
 // Permanent delete (use with caution)
  const permanentDeleteContactMessage = async (req, res) => {
@@ -187,14 +188,14 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     const message = await ContactUs.findById(req.params.id);
     
     if (!message) {
-      return res.status(404).json({ success: false, message: "Contact message not found" });
+      return res.json({ success: false, message: "Contact message not found" });
     }
 
     await ContactUs.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({ success: true, message: "Contact message permanently deleted" });
+    res.json({ success: true, message: "Contact message permanently deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -205,7 +206,7 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     
     const message = await ContactUs.findById(id);
     if (!message) {
-      return res.status(404).json({ success: false, message: "Contact message not found" });
+      return res.json({ success: false, message: "Contact message not found" });
     }
 
     // You can add a custom field for replied status if needed
@@ -223,15 +224,15 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
         new: true,
         runValidators: true
       }
-    ).populate("createdBy", "name email");
+    ).populate("created_by", "name email");
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       message: "Message marked as replied", 
       data: updated 
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -273,7 +274,7 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
       { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } }
     ]);
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       data: {
         total: totalMessages,
@@ -284,7 +285,7 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -294,7 +295,7 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     const { query } = req.query;
     
     if (!query) {
-      return res.status(400).json({ 
+      return res.json({ 
         success: false, 
         message: "Please provide a search query" 
       });
@@ -312,13 +313,13 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
       .sort({ createdAt: -1 })
       .limit(20);
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       data: messages,
       count: messages.length
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -328,14 +329,14 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     const { ids, status } = req.body;
     
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ 
+      return res.json({ 
         success: false, 
         message: "Please provide an array of message IDs" 
       });
     }
 
     if (!status || !["active", "inactive"].includes(status)) {
-      return res.status(400).json({ 
+      return res.json({ 
         success: false, 
         message: "Please provide a valid status (active/inactive)" 
       });
@@ -346,13 +347,13 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
       { $set: { status } }
     );
 
-    res.status(200).json({ 
+    res.json({ 
       success: true, 
       message: `${result.modifiedCount} messages updated successfully`,
       data: result
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.json({ success: false, message: "Internal Server Error" });
   }
 };
 

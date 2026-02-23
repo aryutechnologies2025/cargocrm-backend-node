@@ -19,14 +19,13 @@ import {
 const contactUsRouter = express.Router();
 
 contactUsRouter.post("/create-message", addContactMessage);
-
-// Protected routes (require authentication)
 contactUsRouter.get("/view-messages", getContactMessages);
 contactUsRouter.get("/view-message/:id", getContactMessageById);
 contactUsRouter.put("/edit-message/:id", editContactMessage);
 contactUsRouter.delete("/delete-message/:id", deleteContactMessage);
 
 
+//if needed
 contactUsRouter.get("/view-by-email/:email", getContactMessagesByEmail);
 
 contactUsRouter.delete("/permanent-delete/:id", permanentDeleteContactMessage);

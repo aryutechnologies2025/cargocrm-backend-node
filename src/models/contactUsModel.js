@@ -30,7 +30,7 @@ message: {
     default: "0"
   },
 
-  createdBy: {
+  created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
    

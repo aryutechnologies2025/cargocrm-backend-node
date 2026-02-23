@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 
  const createUser = async (req, res) => {
   try {
-    const { name, email, password,phone,role,status,createdBy } = req.body;
+    const { name, email, password,phone,role,status,created_by } = req.body;
 
     const exists = await User.findOne({ email });
     if (exists) {
@@ -22,7 +22,7 @@ import bcrypt from "bcrypt";
       phone,
       role,
       status,
-      createdBy
+      created_by
     });
 
      res.json({
