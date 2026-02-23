@@ -1,5 +1,6 @@
 import Beneficiary from "../models/beneficiaryModel.js";
 import Customer from "../models/customerModel.js";
+import { encryptData } from "../utils/encryption.js";
 import { checkExistingRecord, handleValidationError } from "./baseController.js";
 
 const generateBeneficiaryId = async () => {
@@ -107,14 +108,15 @@ const getBeneficiaries = async (req, res) => {
       customer: formattedCustomers,
     };
 
-    const encodedData = Buffer.from(
-      JSON.stringify(responseData)
-    ).toString("base64");
+    // const encodedData = Buffer.from(
+    //   JSON.stringify(responseData)
+    // ).toString("base64");
+    const encryptedData = encryptData(responseData);
 
     return res.status(200).json({
       success: true,
-      encoded: true,
-      data: encodedData,
+      encrypted: true,
+      data: encryptedData,
     });
 
   } catch (error) {

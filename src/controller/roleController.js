@@ -1,6 +1,7 @@
 
 import e from 'express';
 import Role from '../models/roleModels.js';
+import { encryptData } from '../utils/encryption.js';
 
 const addRole = async (req, res) => {
   const { name,status,createdBy } = req.body;
@@ -44,10 +45,15 @@ const addRole = async (req, res) => {
 const getRole = async (req, res) => {
   // const data = await Role.find();
   const data = await Role.find({  is_deleted: "0" });
-  const encodedData = Buffer.from(
-      JSON.stringify(data)
-    ).toString("base64");
-  res.json({success:true,data:encodedData});
+  // const encodedData = Buffer.from(
+  //     JSON.stringify(data)
+  //   ).toString("base64");
+  const encryptedData = encryptData(data);
+  return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData,
+    });
 };
 
 const getRoleById = async (req, res) => {
