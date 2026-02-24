@@ -2,6 +2,7 @@ import e from "express";
 import Order from "../models/orderModel.js";
 import Parcel from "../models/parcelModel.js";
 import { handleValidationError } from "./baseController.js";
+import { encryptData } from "../utils/encryption.js";
 
 
  const addParcel = async (req, res) => {
@@ -13,13 +14,13 @@ import { handleValidationError } from "./baseController.js";
     const { order_id, piece_number, weight, length, width, height, description, status, created_by } = req.body;
 
     // Verify order exists and is active
-    const order = await Order.findById({ _id: order_id, status: "1" });
-    if (!order) {
-      return res.json({ 
-        success: false, 
-        errors: { order_id: "Invalid  order" } 
-      });
-    }
+    // const order = await Order.findById({ _id: order_id, status: "1" });
+    // if (!order) {
+    //     return res.json({ 
+    //       success: false, 
+    //       errors: { order_id: "Invalid  order" } 
+    //     });
+    //   }
 
     // Check if place number already exists for this order
     // const existingParcel = await Parcel.findOne({ 
@@ -35,7 +36,7 @@ import { handleValidationError } from "./baseController.js";
     //   });
     // }
 
-    const parcel = new Parcel({
+    const parcels = new Parcel({
       order_id,
       piece_number,
       weight,
@@ -47,12 +48,12 @@ import { handleValidationError } from "./baseController.js";
       created_by
     });
 
-    await parcel.save();
+    await parcels.save();
     
-    await parcel.populate([
-      { path: "order_id", select: "cargoMode packed" },
-      { path: "created_by", select: "name email" }
-    ]);
+    // await parcel.populate([
+    //   { path: "order_id", select: "cargoMode packed" },
+    //   { path: "created_by", select: "name email" }
+    // ]);
 
     res.json({ 
       success: true, 
@@ -69,11 +70,37 @@ import { handleValidationError } from "./baseController.js";
  const getParcels = async (req, res) => {
   try {
     const parcels = await Parcel.find({is_deleted: 0})
-      .populate("order_id", "cargoMode packed sender_id beneficiary_id")
+      .populate("order_id", "tracking_number cargoMode packed sender_id beneficiary_id")
       .populate("created_by", "name email")
       .sort({ createdAt: -1 });
+    const Orders = await Order.find();
+    const formattedParcels = parcels.map((parcel) => ({
+      id: parcel._id,
+      order_id: parcel.order_id?.tracking_number,
+      piece_number: parcel.piece_number,
+      weight:parcel.weight,
+      length: parcel.length,
+      width: parcel.width,
+      height: parcel.height,
+      description:parcel.description,
+      status: parcel.status,
+      created_by: parcel?.created_by?.name,
+      createdAt: parcel.createdAt
+    }));
+    const formattedOrders = Orders.map((order) => ({
+      id: order._id,
+      tracking_number: order.tracking_number,
+
+    }))
+    const responseData = {
+      success: true,
+      data: formattedParcels,
+      orders: formattedOrders
+    };
+    const encryptedData = encryptData(responseData);
+    res.json({ success: true, encrypted: true, data: encryptedData });
       
-    res.json({ success: true, data: parcels });
+    // res.json({ success: true, data: parcels });
   } catch (error) {
     res.json({ success: false, message: error.message || "Internal Server Error" });
   }
@@ -113,6 +140,27 @@ import { handleValidationError } from "./baseController.js";
       .sort({ placeNumber: 1 });
       
     res.json({ success: true, data: parcels });
+  } catch (error) {
+    res.json({ success: false, message: error.message || "Internal Server Error" });
+  }
+};
+
+const getTrakingDetailById = async (req, res) => {
+  const {tracking_number} = req.query;
+  try {
+    const parcel = await Order.findById(tracking_number);
+    if (!parcel) {
+      return res.json({ success: false, message: "Parcel not found" });
+    }
+    const trackingDetails = await Order.find({tracking_number: parcel.tracking_number})
+    .populate("sender_id", "name ")
+    .populate("beneficiary_id", "name");
+    const encryptedData = encryptData(trackingDetails);
+    return res.status(200).json({
+          success: true,
+          encrypted: true,
+          data: encryptedData,
+        });
   } catch (error) {
     res.json({ success: false, message: error.message || "Internal Server Error" });
   }
@@ -178,4 +226,4 @@ const deleteParcel = async (req, res) => {
     res.json({ success: false, error: err.message });
   }
 };
-export { addParcel, getParcels, getParcelById, getParcelsByOrder, editParcel, deleteParcel };
+export { addParcel,getTrakingDetailById, getParcels, getParcelById, getParcelsByOrder, editParcel, deleteParcel };

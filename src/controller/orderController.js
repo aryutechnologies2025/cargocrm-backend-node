@@ -136,7 +136,9 @@ const createOrder = async (req, res) => {
 const getSenderByBeneficiary = async (req, res) => {
   const {customerId} = req.query;
   try{
-    const BeneficiaryDetails = await Beneficiary.find({customerId: customerId});
+    const BeneficiaryDetails = await Beneficiary.find({customerId: customerId})
+    .populate("customerId", "name email phone");
+
     console.log("BeneficiaryDetails",BeneficiaryDetails);
     if(!BeneficiaryDetails){
       return res.json({ success: false, message: "Beneficiary not found" });
@@ -155,8 +157,20 @@ const getSenderByBeneficiary = async (req, res) => {
     //   encoded: true,
     //   data: encodedData,
     // });
+  const responseData = {
+      success: true,
+      data: BeneficiaryDetails,
+      
+    };
+    const encryptedData = encryptData(responseData);
 
-    return res.status(200).json({ success: true, data: BeneficiaryDetails });
+    return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData,
+    });
+
+    // return res.status(200).json({ success: true, data: BeneficiaryDetails });
   }catch(error){
     res.json({ success: false, message: error.message || "Internal Server Error" });
   }
