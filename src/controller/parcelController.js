@@ -11,49 +11,19 @@ import { encryptData } from "../utils/encryption.js";
       return res.json({ success: false, message: "Data is required" });
     }
 
-    const { order_id, piece_number, weight, length, width, height, description, status, created_by } = req.body;
+    const { order_id, piece_number, piece_details, description, status, created_by } = req.body;
 
-    // Verify order exists and is active
-    // const order = await Order.findById({ _id: order_id, status: "1" });
-    // if (!order) {
-    //     return res.json({ 
-    //       success: false, 
-    //       errors: { order_id: "Invalid  order" } 
-    //     });
-    //   }
-
-    // Check if place number already exists for this order
-    // const existingParcel = await Parcel.findOne({ 
-    //   order_id, 
-    //   piece_number,
-    //   status: "1" 
-    // });
     
-    // if (existingParcel) {
-    //   return res.json({ 
-    //     success: false, 
-    //     errors: { piece_number: "Place number already exists for this order" } 
-    //   });
-    // }
-
     const parcels = new Parcel({
       order_id,
       piece_number,
-      weight,
-      length,
-      width,
-      height,
+      piece_details,
       description: description || "",
       status,
       created_by
     });
 
     await parcels.save();
-    
-    // await parcel.populate([
-    //   { path: "order_id", select: "cargoMode packed" },
-    //   { path: "created_by", select: "name email" }
-    // ]);
 
     res.json({ 
       success: true, 
@@ -76,12 +46,10 @@ import { encryptData } from "../utils/encryption.js";
     const Orders = await Order.find();
     const formattedParcels = parcels.map((parcel) => ({
       id: parcel._id,
-      order_id: parcel.order_id?.tracking_number,
+      order_id: parcel.order_id,
+      tracking_number: parcel.order_id?.tracking_number,
       piece_number: parcel.piece_number,
-      weight:parcel.weight,
-      length: parcel.length,
-      width: parcel.width,
-      height: parcel.height,
+      piece_details: parcel.piece_details,
       description:parcel.description,
       status: parcel.status,
       created_by: parcel?.created_by?.name,

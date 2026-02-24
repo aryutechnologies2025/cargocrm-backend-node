@@ -6,29 +6,33 @@ const parcelSchema = new mongoose.Schema({
   order_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order"
-    
+
 
   },
   piece_number: {
     type: String,
   },
-  weight: {
-    type: String,
-    trim: true
-  },
+  piece_details: [
+    {
+      weight: {
+        type: String,
+        trim: true
+      },
 
-  length: {
-    type: String,
-    trim: true
-  },
-  width: {
-    type: String,
-    trim: true
-  },
-  height: {
-    type: String,
-    trim: true
-  },
+      length: {
+        type: String,
+        trim: true
+      },
+      width: {
+        type: String,
+        trim: true
+      },
+      height: {
+        type: String,
+        trim: true
+      },
+    }],
+
   description: {
     type: String,
     trim: true,

@@ -50,8 +50,11 @@ const getContainerRuns = async (req, res) => {
       data: formattedContainerRuns,
     };
     const encryptedData = encryptData(responseData);
-    res.json({ success: true, encrypted: true, data: encryptedData });
-
+    return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData,
+    });
     // res.json({ success: true, data: containerRuns });
   } catch (error) {
     res.json({ success: false, message: error.message || "Internal Server Error" });
