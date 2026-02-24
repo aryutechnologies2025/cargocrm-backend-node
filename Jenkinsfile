@@ -32,12 +32,12 @@ pipeline {
             }
         }
         
-        stage('Security Scan - Semgrep') {
+        stage('Security Scan - Semgrep (Cloud)') {
+            environment {
+                SEMGREP_APP_TOKEN = credentials('semgrep-token')
+            }
             steps {
-                sh '''
-                semgrep --config=p/javascript --json --output semgrep-report.json || true
-                '''
-                archiveArtifacts artifacts: 'semgrep-report.json', fingerprint: true
+                sh 'semgrep ci || true'
             }
         }
 
