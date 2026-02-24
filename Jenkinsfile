@@ -31,6 +31,15 @@ pipeline {
                 '''
             }
         }
+        
+        stage('Security Scan - Semgrep') {
+            steps {
+                sh '''
+                semgrep --config=p/javascript --json --output semgrep-report.json || true
+                '''
+                archiveArtifacts artifacts: 'semgrep-report.json', fingerprint: true
+            }
+        }
 
         stage('Restart Backend (PM2)') {
             steps {
