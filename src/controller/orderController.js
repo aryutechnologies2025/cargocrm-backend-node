@@ -90,7 +90,7 @@ const createOrder = async (req, res) => {
   try {
     const orders = await Order.find({ is_deleted: "0" })
       .populate("sender_id", "name email phone")
-      .populate("beneficiary_id", "name")
+      .populate("beneficiary_id", "_id name")
       .populate("created_by", "name email")
       .sort({ createdAt: -1 });
       console.log("orders",orders);

@@ -40,7 +40,7 @@ import bcrypt from "bcrypt";
   role: { $ne: superAdminRole?._id },
   is_deleted: "0"
 }).populate("role", "name");
-  const role=await Role.find({}).select("name");
+  const role=await Role.find({is_deleted: "0", status: "1"}).select("name");
   res.json({ success: true, users:users,role:role });
 };
 
