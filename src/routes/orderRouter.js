@@ -1,6 +1,6 @@
 import express from "express";
 import useAuth from "../middlewares/authMiddleware.js";
-import { createOrder, 
+import { createOrder, getParcelByIds,
     deleteOrder, 
     editOrder, 
     getOrderById, 
@@ -14,6 +14,7 @@ orderRouter.post("/create-orders", createOrder);
 orderRouter.get("/view-orders", getOrders);
 orderRouter.get("/get-sender-by-beneficiary", getSenderByBeneficiary);
 orderRouter.get("/view-orders/:id", getOrderById);
+orderRouter.get("/view-parcel/:id", getParcelByIds);
 orderRouter.put("/edit-orders/:id", editOrder);
 orderRouter.delete("/delete-orders/:id", deleteOrder);
 

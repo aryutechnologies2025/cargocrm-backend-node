@@ -4,6 +4,8 @@ import Customer from "../models/customerModel.js";
 import Order from "../models/orderModel.js";
 import { handleValidationError } from "./baseController.js";
 import {encryptData } from "../utils/encryption.js";
+import Parcel from "../models/parcelModel.js";
+import Settings from "../models/settingModel.js";
 // import Beneficiary from "../models/beneficiaryModel.js";
 
 const generateTrackingNumber = async () => {
@@ -132,6 +134,73 @@ const createOrder = async (req, res) => {
     res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
+
+const getParcelByIds = async(req,res)=>{
+  const {id} = req.params;
+  try{
+    const parcel = await Parcel.find({order_id: id})
+      .populate({
+        path: "order_id",
+        select: "sender_id beneficiary_id cargo_mode packed status tracking_number",
+        populate: [
+          { path: "sender_id", select: "name address" },
+          { path: "beneficiary_id", select: "name address" }
+        ]
+      })
+      .populate("created_by", "name email")
+    const settingDetails = await Settings.find({});
+
+    
+    const formatedParcel = parcel.map((parcel) => ({
+      id: parcel._id,
+      order_id: parcel.order_id?._id,
+      tracking_number: parcel.order_id?.tracking_number,
+      sender: {
+        id: parcel.order_id?.sender_id?._id,
+        name: parcel.order_id?.sender_id?.name,
+        address:parcel.order_id?.sender_id?.address
+      },
+      beneficiary: {
+        id: parcel.order_id?.beneficiary_id?._id,
+        name: parcel.order_id?.beneficiary_id?.name,
+        address:parcel.order_id?.beneficiary_id?.address
+      },
+      cargo_mode: parcel.order_id?.cargo_mode,
+      piece_number: parcel.piece_number,
+      piece_details: parcel.piece_details,
+      description: parcel.description,
+      status: parcel.status,
+      created_by: parcel.created_by?.name,
+      createdAt: parcel.createdAt,
+
+    }));
+
+    const formatedSetting = settingDetails.map((setting) => ({
+      id: setting._id,
+      teamAndCondition: setting.teamAndCondition,
+    }));
+
+    const responseData = {
+      success: true,
+      data: formatedParcel,
+      settings: formatedSetting
+    };
+
+    const encryptedData = encryptData(responseData);
+   return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData,
+    });
+  //  return res.status(200).json({
+  //     success: true,
+  //     encrypted: true,
+  //     data: encryptedData,
+  //   });
+  }catch(error){
+    res.json({ success: false, message: error.message || "Internal Server Error" });
+  }
+}
 
 const getSenderByBeneficiary = async (req, res) => {
   const {customerId} = req.query;
@@ -300,4 +369,4 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-export { createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };
+export {getParcelByIds, createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };
