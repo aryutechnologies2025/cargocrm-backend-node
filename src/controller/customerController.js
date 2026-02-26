@@ -136,7 +136,7 @@ const generateCustomerId = async () => {
 
 const addCustomers = async (req, res) => {
     try {
-        const { name, phone, email, address } = req.body;
+        const { name, phone, email, address, city, country } = req.body;
         
         if (req.body.id) {
             const existingCustomer = await Customer.findById(req.body.id);
@@ -145,6 +145,8 @@ const addCustomers = async (req, res) => {
                 existingCustomer.phone = phone;
                 existingCustomer.email = email;
                 existingCustomer.address = address;
+                existingCustomer.city = city;
+                existingCustomer.country = country;
                 await existingCustomer.save();
                 
                 return res.json({ 
@@ -155,7 +157,7 @@ const addCustomers = async (req, res) => {
             }
         }
 
-        const customer = new Customer({ name, phone, email, address });
+        const customer = new Customer({ name, phone, email, address, city, country });
         await customer.save();
         
         res.json({ 
