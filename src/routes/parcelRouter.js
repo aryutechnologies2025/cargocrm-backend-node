@@ -5,7 +5,8 @@ import { addParcel,
     editParcel, 
     getParcelById, 
     getParcels ,
-    getTrakingDetailById
+    getTrakingDetailById,
+    addUpdateParcel, getNewParcelId
 } from "../controller/parcelController.js";
 
 const parcelRouter = express.Router();
@@ -17,4 +18,8 @@ parcelRouter.get("/view-parcels/:id", getParcelById);
 parcelRouter.put("/edit-parcels/:id", editParcel);
 parcelRouter.delete("/delete-parcels/:id", deleteParcel);
 
+
+
+parcelRouter.post("/add-update-parcels", addUpdateParcel);
+parcelRouter.get("/get-new-parcel-id/:id", getNewParcelId);
 export default parcelRouter;

@@ -2,13 +2,16 @@ import mongoose from "mongoose";
 
 const collectionName = "parcels";
 const parcelSchema = new mongoose.Schema({
-
-  order_id: {
+  customerId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Order"
-
-
+    ref: "Customer",
   },
+  // order_id: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "Order"
+
+
+  // },
   piece_number: {
     type: String,
   },
@@ -40,7 +43,7 @@ const parcelSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-
+    default: "1"
   },
 
   is_deleted: {
@@ -48,12 +51,12 @@ const parcelSchema = new mongoose.Schema({
     default: "0"
   },
 
-  created_by: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+  // created_by: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "User",
 
-    immutable: true
-  }
+  //   immutable: true
+  // }
 }, {
   timestamps: true
 });

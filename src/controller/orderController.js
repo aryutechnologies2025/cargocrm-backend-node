@@ -369,4 +369,238 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-export {getParcelByIds, createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };
+
+const addUpdateOrder = async (req, res) => {
+  try {
+    const { id, customerId, cargo_mode, packed } = req.body;
+    console.log("req.body", req.body);
+
+    if (id) {
+      const existingOrder = await Order.findById(id);
+
+      // if ( existingOrder) {
+      //   return res.status(404).json({
+      //     success: false,
+      //     message: "Order not found"
+      //   });
+      // }
+
+    //  existingOrder.tracking_number = tracking_number;
+     existingOrder.customerId = customerId;
+     existingOrder.cargo_mode = cargo_mode;
+     existingOrder.packed = packed;
+    
+
+      await existingOrder.save();
+
+      return res.json({
+        success: true,
+        message: "Order updated successfully",
+        data: existingOrder
+      });
+    }
+
+    const tracking_number = await generateTrackingNumber();
+
+    const order = new Order({
+      tracking_number, customerId, cargo_mode, packed
+    });
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "Order added successfully",
+      data: order
+    });
+
+  } catch (error) {
+    console.error("ADD Order ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getNewBeneficiaryId = async (req, res) => {
+  try{
+    const {id} = req.params;
+    const order = await Order.findOne({
+      $or: [{ _id: id }, { customerId: id }],
+      is_deleted: "0"
+    });
+    const responseData = {
+      success:true,
+      data:order
+    };
+    const encryptedData = encryptData(responseData);
+    return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData,
+    });
+  }catch(error){
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || "Internal Server Error" 
+    });
+  } 
+};
+
+
+// const allOrder = async (req,res)=>{
+//   try{
+//     const orders = await Order.find({ is_deleted: "0" }).populate("customerId", "name");
+//     const beneficiaryDetails = await Beneficiary.find({ is_deleted: "0" })
+//     .populate("customerId", "name");
+//     const parcel = await Parcel.find({ is_deleted: "0" });
+//     const formattedOrders = orders.map((order) => ({
+//       id: order._id,
+//       tracking_number: order.tracking_number,
+//       customerId: order.customerId?._id,
+//       customer:order.customerId?.name,
+//       cargo_mode: order.cargo_mode,
+//       packed: order.packed
+//     }));
+//     const formattedbeneficiaryDetails = beneficiaryDetails.map((beneficiary) => ({
+//       id: beneficiary._id,
+//       name: beneficiary?.name,
+//       customerId: beneficiary.customerId?.name,
+//       beneficiary_id: beneficiary.beneficiary_id,
+//       email: beneficiary.email,
+//       phone: beneficiary.phone,
+//       city:beneficiary.city,
+//       country:beneficiary.country,
+//       address:beneficiary.address
+//     }));
+
+//     const formattedParcel = parcel.map((parcel) => ({
+//       id: parcel._id,
+//       customerId: parcel.customerId,
+//       piece_number: parcel.piece_number,
+//       piece_details: parcel.piece_details,
+//       description:parcel.description
+//     }));
+
+//     const responseData = {
+//       success: true,
+//       data: formattedOrders,
+//       beneficiaryDetails: formattedbeneficiaryDetails,
+//       parcel:formattedParcel
+//     };
+//     const encryptedData = encryptData(responseData);
+//     return res.status(200).json({
+//       success: true,
+//       encrypted: true,
+//       data: encryptedData,
+//     });
+//   }catch(error){
+//     res.status(500).json({ 
+//       success: false, 
+//       message: error.message || "Internal Server Error" 
+//     });
+//   }
+// }
+
+
+const allOrder = async (req, res) => {
+  try {
+    const orders = await Order.find({ is_deleted: "0" })
+      .populate("customerId", "name");
+
+    const beneficiaryDetails = await Beneficiary.find({ is_deleted: "0" })
+      .populate("customerId", "name");
+
+    const parcel = await Parcel.find({ is_deleted: "0" });
+
+    // Create grouped object
+    const groupedData = {};
+
+    // Helper function to initialize customer group
+    const initCustomer = (customerId, customerName = null) => {
+      if (!groupedData[customerId]) {
+        groupedData[customerId] = {
+          customerId,
+          customerName,
+          orders: [],
+          beneficiaries: [],
+          parcels: []
+        };
+      }
+    };
+
+    // Group Orders
+    orders.forEach((order) => {
+      const customerId = order.customerId?._id?.toString();
+      if (!customerId) return;
+
+      initCustomer(customerId, order.customerId?.name);
+
+      groupedData[customerId].orders.push({
+        id: order._id,
+        tracking_number: order.tracking_number,
+        cargo_mode: order.cargo_mode,
+        packed: order.packed,
+        createdAt: order.createdAt
+      });
+    });
+
+    // Group Beneficiaries
+    beneficiaryDetails.forEach((beneficiary) => {
+      const customerId = beneficiary.customerId?._id?.toString();
+      if (!customerId) return;
+
+      initCustomer(customerId, beneficiary.customerId?.name);
+
+      groupedData[customerId].beneficiaries.push({
+        id: beneficiary._id,
+        name: beneficiary.name,
+        beneficiary_id: beneficiary.beneficiary_id,
+        email: beneficiary.email,
+        phone: beneficiary.phone,
+        city: beneficiary.city,
+        country: beneficiary.country,
+        address: beneficiary.address
+      });
+    });
+
+    // Group Parcels
+    parcel.forEach((p) => {
+      const customerId = p.customerId?.toString();
+      if (!customerId) return;
+
+      initCustomer(customerId);
+
+      groupedData[customerId].parcels.push({
+        id: p._id,
+        piece_number: p.piece_number,
+        piece_details: p.piece_details,
+        description: p.description
+      });
+    });
+
+    const responseData = {
+      success: true,
+      data: Object.values(groupedData)
+    };
+
+    const encryptedData = encryptData(responseData);
+
+    return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error"
+    });
+  }
+};
+
+    
+
+export {addUpdateOrder,getNewBeneficiaryId,allOrder,getParcelByIds, createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };

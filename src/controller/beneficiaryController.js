@@ -12,7 +12,7 @@ const generateBeneficiaryId = async () => {
     return "bene-0001";
   }
 
- // First customer
+  // First customer
   if (
     !lastCustomer ||
     !lastCustomer.beneficiary_id ||
@@ -21,10 +21,10 @@ const generateBeneficiaryId = async () => {
     return "00001";
   }
 
-   const lastNumber = Number(lastCustomer.beneficiary_id);
+  const lastNumber = Number(lastCustomer.beneficiary_id);
   const nextNumber = lastNumber + 1;
 
-   return String(nextNumber).padStart(5, "0");
+  return String(nextNumber).padStart(5, "0");
 };
 
 const addBeneficiary = async (req, res) => {
@@ -33,10 +33,10 @@ const addBeneficiary = async (req, res) => {
       return res.json({ success: false, message: "Data is required" });
     }
 
-    const {customerId, name, email, phone, address,city,country, status,created_by } = req.body;
+    const { customerId, name, email, phone, address, city, country, status, created_by } = req.body;
 
     // Check if email already exists
-      const emailExists = await Beneficiary.findOne({ email });
+    const emailExists = await Beneficiary.findOne({ email });
     if (emailExists) {
       return res.json({
         success: false,
@@ -44,7 +44,7 @@ const addBeneficiary = async (req, res) => {
       });
     }
 
-       //  Generate beneficiaryId
+    //  Generate beneficiaryId
     const beneficiary_id = await generateBeneficiaryId();
 
     const beneficiary = new Beneficiary({
@@ -57,16 +57,16 @@ const addBeneficiary = async (req, res) => {
       city,
       country,
       status,
-     created_by
+      created_by
     });
 
     await beneficiary.save();
-    res.json({ 
-      success: true, 
-      message: "Beneficiary added successfully", 
+    res.json({
+      success: true,
+      message: "Beneficiary added successfully",
     });
 
-  }catch (error) {
+  } catch (error) {
     console.error("ADD CUSTOMER ERROR:", error);
     res.json({
       success: false,
@@ -128,25 +128,25 @@ const getBeneficiaries = async (req, res) => {
   }
 };
 
- const getBeneficiaryById = async (req, res) => {
+const getBeneficiaryById = async (req, res) => {
   try {
     const beneficiary = await Beneficiary.findById(req.params.id)
       .populate("created_by", "name email");
-    
+
     if (!beneficiary) {
       return res.json({ success: false, message: "Beneficiary not found" });
     }
-    
+
     res.json({ success: true, data: beneficiary });
   } catch (error) {
-    res.json({ success: false, message:error.message || "Internal Server Error" });
+    res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
 
- const editBeneficiary = async (req, res) => {
+const editBeneficiary = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const beneficiary = await Beneficiary.findById(id);
     if (!beneficiary) {
       return res.json({ success: false, message: "Beneficiary not found" });
@@ -155,9 +155,9 @@ const getBeneficiaries = async (req, res) => {
     const { email } = req.body;
     if (email && email !== beneficiary.email) {
       const emailExists = await checkExistingRecord(
-        Beneficiary, 
-        { email, _id: { $ne: id } }, 
-        "email", 
+        Beneficiary,
+        { email, _id: { $ne: id } },
+        "email",
         res
       );
       if (emailExists) return;
@@ -168,9 +168,9 @@ const getBeneficiaries = async (req, res) => {
       runValidators: true
     });
 
-    res.json({ 
-      success: true, 
-      message: "Beneficiary updated successfully", 
+    res.json({
+      success: true,
+      message: "Beneficiary updated successfully",
 
     });
   } catch (error) {
@@ -179,7 +179,7 @@ const getBeneficiaries = async (req, res) => {
   }
 };
 
- const deleteBeneficiary = async (req, res) => {
+const deleteBeneficiary = async (req, res) => {
   const { id } = req.params;
   try {
     const beneficiaryDetails = await Beneficiary.findByIdAndUpdate(
@@ -196,4 +196,93 @@ const getBeneficiaries = async (req, res) => {
   }
 };
 
-export { addBeneficiary, getBeneficiaries, getBeneficiaryById, editBeneficiary, deleteBeneficiary };    
+
+const addUpdateBeneficiary = async (req, res) => {
+  try {
+    const { id, customerId, name, email, phone, address, city, country, status } = req.body;
+
+    if (id) {
+      const existingBeneficiary = await Beneficiary.findById(id);
+
+      if (!existingBeneficiary) {
+        return res.status(404).json({
+          success: false,
+          message: "Beneficiary not found"
+        });
+      }
+
+      existingBeneficiary.customerId = customerId;
+      existingBeneficiary.name = name;
+      existingBeneficiary.email = email;
+      existingBeneficiary.phone = phone;
+      existingBeneficiary.address = address;
+      existingBeneficiary.city = city;
+      existingBeneficiary.country = country;
+      existingBeneficiary.status = status;
+
+      await existingBeneficiary.save();
+
+      return res.json({
+        success: true,
+        message: "Beneficiary updated successfully",
+        data: existingBeneficiary
+      });
+    }
+
+    const beneficiary_id = await generateBeneficiaryId();
+
+    const beneficiary = new Beneficiary({
+      customerId,
+      beneficiary_id,
+      name,
+      email,
+      phone,
+      address,
+      city,
+      country,
+      status
+    });
+
+    await beneficiary.save();
+
+    return res.json({
+      success: true,
+      message: "Beneficiary added successfully",
+      data: beneficiary
+    });
+
+  } catch (error) {
+    console.error("ADD BENEFICIARY ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getNewBeneficiaryId = async (req, res) => {
+  try{
+    const {id} = req.params;
+    const beneficiary = await Beneficiary.findOne({
+      customerId: id,
+      is_deleted: "0"
+    });
+    const responseData = {
+      success:true,
+      data:beneficiary
+    };
+    const encryptedData = encryptData(responseData);
+    return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData,
+    });
+  }catch(error){
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || "Internal Server Error" 
+    });
+  } 
+};
+
+export {addUpdateBeneficiary, getNewBeneficiaryId, addBeneficiary, getBeneficiaries, getBeneficiaryById, editBeneficiary, deleteBeneficiary };    

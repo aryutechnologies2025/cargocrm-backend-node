@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 const collectionName = "customers";
 const customerSchema = new mongoose.Schema({
   
-  customer_id: {
-    type: String,
-    unique: true
-  },
+  // customer_id: {
+  //   type: String,
+  //   unique: true
+  // },
   name: {
     type: String,
     trim: true
@@ -26,17 +26,17 @@ const customerSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-   
+    default: "1"
   },
     is_deleted: {
     type: String,
     default: "0"
   },
-  created_by: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    immutable: true
-  }
+  // created_by: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "User",
+  //   immutable: true
+  // }
 }, {
   timestamps: true
 });

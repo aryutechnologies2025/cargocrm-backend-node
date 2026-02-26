@@ -5,7 +5,8 @@ import { createOrder, getParcelByIds,
     editOrder, 
     getOrderById, 
     getSenderByBeneficiary,
-    getOrders } from "../controller/orderController.js";
+    addUpdateOrder,getNewBeneficiaryId,
+    getOrders,allOrder } from "../controller/orderController.js";
 
 
 const orderRouter = express.Router();
@@ -18,4 +19,8 @@ orderRouter.get("/view-parcel/:id", getParcelByIds);
 orderRouter.put("/edit-orders/:id", editOrder);
 orderRouter.delete("/delete-orders/:id", deleteOrder);
 
+
+orderRouter.post("/add-update-order", addUpdateOrder);
+orderRouter.get("/get-new-beneficiary-id/:id", getNewBeneficiaryId);
+orderRouter.get("/all-order", allOrder);
 export default orderRouter;

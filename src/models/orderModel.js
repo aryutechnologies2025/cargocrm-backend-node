@@ -7,17 +7,17 @@ const orderSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-  sender_id: {
+  customerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
  
     
   },
-  beneficiary_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Beneficiary",
+  // beneficiary_id: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "Beneficiary",
 
-  },
+  // },
   cargo_mode: {
     type: String,
   },
@@ -27,6 +27,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
+    default: "1"
   },
 
       is_deleted: {
@@ -34,11 +35,11 @@ const orderSchema = new mongoose.Schema({
     default: "0"
   },
 
-  created_by: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    immutable: true
-  }
+  // created_by: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "User",
+  //   immutable: true
+  // }
 }, {
   timestamps: true
 });

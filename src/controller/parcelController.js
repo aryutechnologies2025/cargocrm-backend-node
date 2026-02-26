@@ -194,4 +194,82 @@ const deleteParcel = async (req, res) => {
     res.json({ success: false, error: err.message });
   }
 };
-export { addParcel,getTrakingDetailById, getParcels, getParcelById, getParcelsByOrder, editParcel, deleteParcel };
+
+
+const addUpdateParcel = async (req, res) => {
+  try {
+    const { id, customerId, order_id, piece_number, piece_details, description} = req.body;
+
+    if (id) {
+      const existingParcel = await Parcel.findById(id);
+
+      if (!existingParcel) {
+        return res.status(404).json({
+          success: false,
+          message: "Parcel not found"
+        });
+      }
+
+      existingParcel.customerId = customerId;
+      existingParcel.order_id = order_id;
+      existingParcel.piece_number = piece_number;
+      existingParcel.piece_details = piece_details;
+      existingParcel.description = description;
+
+
+      await existingParcel.save();
+
+      return res.json({
+        success: true,
+        message: "Parcel updated successfully",
+        data: existingParcel
+      });
+    }
+
+
+    const parcel = new Parcel({
+      customerId, order_id, piece_number, piece_details, description
+    });
+
+    await parcel.save();
+
+    return res.json({
+      success: true,
+      message: "Parcel added successfully",
+      data: parcel
+    });
+
+  } catch (error) {
+    console.error("ADD Parcel ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getNewParcelId = async (req, res) => {
+  try{
+    const {id} = req.params;
+    const parcel = await Parcel.findOne({
+      $or: [{ _id: id }, { customerId: id }],
+      is_deleted: "0"
+    });
+    const responseData = {
+      success:true,
+      data:parcel
+    };
+    const encryptedData = encryptData(responseData);
+    return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData,
+    });
+  }catch(error){
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || "Internal Server Error" 
+    });
+  } 
+};
+export {addUpdateParcel, getNewParcelId, addParcel,getTrakingDetailById, getParcels, getParcelById, getParcelsByOrder, editParcel, deleteParcel };
