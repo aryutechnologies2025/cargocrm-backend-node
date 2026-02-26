@@ -24,6 +24,15 @@ const customerSchema = new mongoose.Schema({
     type: String,
    
   },
+  
+  city: {
+    type: String,
+   
+  },
+  country: {
+    type: String,
+   
+  },
   status: {
     type: String,
     default: "1"

@@ -6,6 +6,7 @@ import { handleValidationError } from "./baseController.js";
 import {encryptData } from "../utils/encryption.js";
 import Parcel from "../models/parcelModel.js";
 import Settings from "../models/settingModel.js";
+import Setting from "../models/settingModel.js";
 // import Beneficiary from "../models/beneficiaryModel.js";
 
 const generateTrackingNumber = async () => {
@@ -507,25 +508,33 @@ const getNewBeneficiaryId = async (req, res) => {
 const allOrder = async (req, res) => {
   try {
     const orders = await Order.find({ is_deleted: "0" })
-      .populate("customerId", "name");
+      .populate("customerId", "name address email phone city country").sort({createdAt: -1});
 
     const beneficiaryDetails = await Beneficiary.find({ is_deleted: "0" })
-      .populate("customerId", "name");
+      .populate("customerId", "name address");
 
     const parcel = await Parcel.find({ is_deleted: "0" });
+
+    const setting = await Setting.findOne();
 
     // Create grouped object
     const groupedData = {};
 
     // Helper function to initialize customer group
-    const initCustomer = (customerId, customerName = null) => {
+    const initCustomer = (customerId, customerName = null,customerAddress=null, customerEmail=null, customerPhone=null, customerCity=null, customerCountry=null) => {
       if (!groupedData[customerId]) {
         groupedData[customerId] = {
           customerId,
           customerName,
+          customerAddress,
+          customerEmail,
+          customerPhone,
+          customerCity,
+          customerCountry,
           orders: [],
           beneficiaries: [],
-          parcels: []
+          parcels: [],
+          settings: setting
         };
       }
     };
@@ -535,7 +544,7 @@ const allOrder = async (req, res) => {
       const customerId = order.customerId?._id?.toString();
       if (!customerId) return;
 
-      initCustomer(customerId, order.customerId?.name);
+      initCustomer(customerId, order.customerId?.name, order.customerId?.address, order.customerId?.email, order.customerId?.phone, order.customerId?.city, order.customerId?.country);
 
       groupedData[customerId].orders.push({
         id: order._id,
