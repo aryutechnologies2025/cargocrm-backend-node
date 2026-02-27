@@ -20,9 +20,7 @@ const useAuth = (req, res, next) => {
   }
 
   if (!token) {
-    return res.json({
-      message: "Unauthorized: No token provided",
-    });
+    return res.status(404).json({ message: "Unauthorized: No token provided" });
   }
 
   try {
