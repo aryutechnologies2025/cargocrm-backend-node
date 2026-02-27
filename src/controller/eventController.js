@@ -53,7 +53,7 @@ const getEvents = async (req, res) => {
       .populate("event_name", "name")
       .populate("tracking_number", "tracking_number")
       .populate("created_by", "name email")
-      .sort({ event_date: -1, event_time: -1 });
+      .sort({ createdAt: -1 });
     const eventMaster = await EventMaster.find({ is_deleted: "0", status: "1" });
     const orders = await Order.find({ is_deleted: "0", status: "1" });
     const container = await ContainerRun.find({ is_deleted: "0", status: "1" });
@@ -64,7 +64,7 @@ const getEvents = async (req, res) => {
       event_id: event.event_name?._id,
       run_number: event.run_number?.run_number,
       run_id: event.run_number?._id,
-      tracking_number: event.tracking_number?.tracking_number,
+      tracking_number: event.tracking_number,
       tracking_id: event.tracking_number?._id,
       event: event.event,
       quantity: event.quantity,
@@ -97,7 +97,7 @@ const getEvents = async (req, res) => {
 
     res.json({ success: true, encrypted: true, data: encryptedData });
     // res.json({ success: true, data: formattedEvents, eventMasters: formattedEventMasters, orders: formattedOrders, containers: formattedContainers });
-    // res.json({ success: true, data: events });
+    // res.json({ success: true, data: responseData });
   } catch (error) {
     res.json({ success: false, message: error.message || "Internal Server Error" });
   }
