@@ -55,7 +55,7 @@ app.use("/api/orders",useAuth, orderRouter);
 app.use("/api/parcels",useAuth, parcelRouter);
 app.use("/api/containerruns",useAuth, containerRunRouter);
 app.use("/api/events",useAuth, eventRouter);
-app.use("/api/contacts",useAuth, contactUsRouter);
+app.use("/api/contacts", contactUsRouter);
 app.use("/api/logs",useAuth, loginLogRouter);
 app.use("/api/collections",useAuth, collectionRouter);
 app.use("/api/eventmasters",useAuth, eventMasterRouter);

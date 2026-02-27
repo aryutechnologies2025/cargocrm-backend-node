@@ -506,10 +506,23 @@ const getNewBeneficiaryId = async (req, res) => {
 
 
 const allOrder = async (req, res) => {
+  const {created_by} = req.query;
+  let orders;
   try {
-    const orders = await Order.find({ is_deleted: "0" })
-      .populate("customerId", "name address email phone city country").sort({createdAt: -1});
-
+    if (created_by && Number(created_by) > 0) {
+    orders = await Order.find({
+      is_deleted: "0",
+      created_by: created_by,
+    })
+      .populate("customerId", "name address email phone city country")
+      .sort({ createdAt: -1 });
+  } else {
+    orders = await Order.find({
+      is_deleted: "0",
+    })
+      .populate("customerId", "name address email phone city country")
+      .sort({ createdAt: -1 });
+  }
     const beneficiaryDetails = await Beneficiary.find({ is_deleted: "0" })
       .populate("customerId", "name address");
 

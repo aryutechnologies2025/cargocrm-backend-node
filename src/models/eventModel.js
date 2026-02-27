@@ -14,10 +14,10 @@ const eventSchema = new mongoose.Schema({
   },
 
 
-  tracking_number: {
+  tracking_number: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
-  },
+  }],
   event:{
     type:String
   },
