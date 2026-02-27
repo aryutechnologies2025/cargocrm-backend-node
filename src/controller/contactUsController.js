@@ -1,4 +1,5 @@
 import ContactUs from "../models/contactUsModel.js";
+import { encryptData } from "../utils/encryption.js";
 
 const addContactMessage = async (req, res) => {
   try {
@@ -35,49 +36,59 @@ const addContactMessage = async (req, res) => {
 
 const getContactMessages = async (req, res) => {
   try {
-    const { status, start_date, end_date, page = 1, limit = 10 } = req.query;
-
-    let query = {};
-
-    // Filter by status
-    if (status) {
-      query.status = status;
-    }
-
-    // Filter by date range
-    if (start_date || end_date) {
-      query.createdAt = {};
-      if (start_date) {
-        query.createdAt.$gte = new Date(start_date);
-      }
-      if (end_date) {
-        query.createdAt.$lte = new Date(end_date);
-      }
-    }
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const messages = await ContactUs.find(query)
-      .populate("created_by", "name email")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await ContactUs.countDocuments(query);
-
-    res.json({
-      success: true,
-      data: messages,
-      pagination: {
-        total,
-        page: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit))
-      }
-    });
+    const ContactDetails = await ContactUs.find({});
+    const encryptedData = encryptData(ContactDetails);
+    return res.json({ success: true, encryptData:true, data: encryptedData });
   } catch (error) {
     res.json({ success: false, message: "Internal Server Error" });
   }
 };
+
+// const getContactMessages = async (req, res) => {
+//   try {
+//     const { status, start_date, end_date, page = 1, limit = 10 } = req.query;
+
+//     let query = {};
+
+//     // Filter by status
+//     if (status) {
+//       query.status = status;
+//     }
+
+//     // Filter by date range
+//     if (start_date || end_date) {
+//       query.createdAt = {};
+//       if (start_date) {
+//         query.createdAt.$gte = new Date(start_date);
+//       }
+//       if (end_date) {
+//         query.createdAt.$lte = new Date(end_date);
+//       }
+//     }
+
+//     const skip = (parseInt(page) - 1) * parseInt(limit);
+
+//     const messages = await ContactUs.find(query)
+//       .populate("created_by", "name email")
+//       .sort({ createdAt: -1 })
+//       .skip(skip)
+//       .limit(parseInt(limit));
+
+//     const total = await ContactUs.countDocuments(query);
+
+//     res.json({
+//       success: true,
+//       data: messages,
+//       pagination: {
+//         total,
+//         page: parseInt(page),
+//         pages: Math.ceil(total / parseInt(limit))
+//       }
+//     });
+//   } catch (error) {
+//     res.json({ success: false, message: "Internal Server Error" });
+//   }
+// };
 
 // Get contact message by ID
 const getContactMessageById = async (req, res) => {
