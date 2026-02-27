@@ -1,5 +1,4 @@
 import ContactUs from "../models/contactUsModel.js";
-import { handleValidationError, checkExistingRecord } from "./baseController.js";
 
 const addContactMessage = async (req, res) => {
   try {
@@ -30,9 +29,6 @@ const addContactMessage = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("error", error);
-    const validationError = handleValidationError(error, res);
-    if (validationError) return;
     res.json({ success: false, message: "Internal Server Error" });
   }
 };

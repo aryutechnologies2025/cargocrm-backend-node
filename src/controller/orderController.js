@@ -7,6 +7,8 @@ import {encryptData } from "../utils/encryption.js";
 import Parcel from "../models/parcelModel.js";
 import Settings from "../models/settingModel.js";
 import Setting from "../models/settingModel.js";
+import Role from "../models/roleModels.js";
+import User from "../models/userModel.js";
 // import Beneficiary from "../models/beneficiaryModel.js";
 
 const generateTrackingNumber = async () => {
@@ -373,7 +375,7 @@ const deleteOrder = async (req, res) => {
 
 const addUpdateOrder = async (req, res) => {
   try {
-    const { id, customerId, cargo_mode, packed } = req.body;
+    const { id, customerId, cargo_mode, packed, created_by } = req.body;
     console.log("req.body", req.body);
 
     if (id) {
@@ -404,7 +406,7 @@ const addUpdateOrder = async (req, res) => {
     const tracking_number = await generateTrackingNumber();
 
     const order = new Order({
-      tracking_number, customerId, cargo_mode, packed
+      tracking_number, customerId, cargo_mode, packed, created_by
     });
 
     await order.save();
@@ -506,19 +508,28 @@ const getNewBeneficiaryId = async (req, res) => {
 
 
 const allOrder = async (req, res) => {
-  const {created_by} = req.query;
+  const { created_by } = req.query;
+console.log("created_by", created_by);
+
+try {
+  const userDetails = await User.findOne({ _id: created_by });
+  console.log("userDetails", userDetails);
+  const userRole = await Role.findOne({ _id: userDetails.role });
+  console.log("userRole", userRole);
+  
   let orders;
-  try {
-    if (created_by && Number(created_by) > 0) {
-    orders = await Order.find({
-      is_deleted: "0",
-      created_by: created_by,
-    })
+  
+  // Check if user is Admin
+  if (userRole && userRole.name === "Admin") {
+    // Admin can see all orders
+    orders = await Order.find({ is_deleted: "0" })
       .populate("customerId", "name address email phone city country")
       .sort({ createdAt: -1 });
   } else {
+    // Non-admin users only see their own orders
     orders = await Order.find({
-      is_deleted: "0",
+      is_deleted: "0", 
+      created_by: created_by
     })
       .populate("customerId", "name address email phone city country")
       .sort({ createdAt: -1 });
@@ -534,7 +545,7 @@ const allOrder = async (req, res) => {
     const groupedData = {};
 
     // Helper function to initialize customer group
-    const initCustomer = (customerId, customerName = null,customerAddress=null, customerEmail=null, customerPhone=null, customerCity=null, customerCountry=null) => {
+    const initCustomer = (customerId, customerName = null, customerAddress = null, customerEmail = null, customerPhone = null, customerCity = null, customerCountry = null) => {
       if (!groupedData[customerId]) {
         groupedData[customerId] = {
           customerId,
@@ -552,7 +563,7 @@ const allOrder = async (req, res) => {
       }
     };
 
-    // Group Orders
+    // Group Orders FIRST - only process customers who have orders
     orders.forEach((order) => {
       const customerId = order.customerId?._id?.toString();
       if (!customerId) return;
@@ -568,39 +579,43 @@ const allOrder = async (req, res) => {
       });
     });
 
-    // Group Beneficiaries
-    beneficiaryDetails.forEach((beneficiary) => {
-      const customerId = beneficiary.customerId?._id?.toString();
-      if (!customerId) return;
+    // Only proceed with beneficiaries and parcels for customers who have orders
+    if (Object.keys(groupedData).length > 0) {
+      // Get customer IDs that have orders
+      const customerIdsWithOrders = Object.keys(groupedData);
 
-      initCustomer(customerId, beneficiary.customerId?.name);
+      // Filter beneficiaryDetails to only include those with customers that have orders
+      beneficiaryDetails.forEach((beneficiary) => {
+        const customerId = beneficiary.customerId?._id?.toString();
+        if (!customerId || !customerIdsWithOrders.includes(customerId)) return;
 
-      groupedData[customerId].beneficiaries.push({
-        id: beneficiary._id,
-        name: beneficiary.name,
-        beneficiary_id: beneficiary.beneficiary_id,
-        email: beneficiary.email,
-        phone: beneficiary.phone,
-        city: beneficiary.city,
-        country: beneficiary.country,
-        address: beneficiary.address
+        // Customer already exists in groupedData, no need to init again
+        groupedData[customerId].beneficiaries.push({
+          id: beneficiary._id,
+          name: beneficiary.name,
+          beneficiary_id: beneficiary.beneficiary_id,
+          email: beneficiary.email,
+          phone: beneficiary.phone,
+          city: beneficiary.city,
+          country: beneficiary.country,
+          address: beneficiary.address
+        });
       });
-    });
 
-    // Group Parcels
-    parcel.forEach((p) => {
-      const customerId = p.customerId?.toString();
-      if (!customerId) return;
+      // Filter parcels to only include those with customers that have orders
+      parcel.forEach((p) => {
+        const customerId = p.customerId?.toString();
+        if (!customerId || !customerIdsWithOrders.includes(customerId)) return;
 
-      initCustomer(customerId);
-
-      groupedData[customerId].parcels.push({
-        id: p._id,
-        piece_number: p.piece_number,
-        piece_details: p.piece_details,
-        description: p.description
+        // Customer already exists in groupedData, no need to init again
+        groupedData[customerId].parcels.push({
+          id: p._id,
+          piece_number: p.piece_number,
+          piece_details: p.piece_details,
+          description: p.description
+        });
       });
-    });
+    }
 
     const responseData = {
       success: true,

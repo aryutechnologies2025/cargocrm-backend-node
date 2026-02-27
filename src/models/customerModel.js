@@ -41,11 +41,11 @@ const customerSchema = new mongoose.Schema({
     type: String,
     default: "0"
   },
-  // created_by: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: "User",
-  //   immutable: true
-  // }
+  created_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    immutable: true
+  }
 }, {
   timestamps: true
 });
