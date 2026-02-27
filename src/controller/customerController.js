@@ -232,7 +232,19 @@ const getAllCustomers = async (req, res) => {
     }
 };
 
+
+const customerDetailByPhoneNumber = async(req,res) =>{
+    try {
+        const { phone } = req.params;
+        const customer = await Customer.findOne({ phone }).sort({ createdAt: -1 });
+
+        res.json({ success: true, data: customer });
+    } catch (error) {
+        res.json({ success: false, message: "Internal Server Error" });
+    }
+}
+
 // export { addCustomers, getCustomer, getAllCustomers };
 
 
-export {addCustomers, getCustomer, getAllCustomers, addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };
+export {customerDetailByPhoneNumber,addCustomers, getCustomer, getAllCustomers, addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };

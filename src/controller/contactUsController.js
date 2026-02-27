@@ -1,21 +1,19 @@
 import ContactUs from "../models/contactUsModel.js";
 import { handleValidationError, checkExistingRecord } from "./baseController.js";
 
-// Add new contact message
- const addContactMessage = async (req, res) => {
+const addContactMessage = async (req, res) => {
   try {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.json({ success: false, message: "Data is required" });
-    }
 
-    const { name, email, message, status,created_by } = req.body;
 
-    // Check if email already exists
-    const emailExists = await checkExistingRecord(ContactUs, { email }, "email", res);
-    if (emailExists) return;
+    const { firstName, lastName, type, gender, appointmentDate, email, message, status, created_by } = req.body;
+
 
     const contactMessage = new ContactUs({
-      name,
+      firstName,
+      lastName,
+      type,
+      gender,
+      appointmentDate,
       email,
       message,
       status,
@@ -23,14 +21,12 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
     });
 
     await contactMessage.save();
-    
-    // Populate createdBy for response
-    await contactMessage.populate("createdBy", "name email");
 
-    res.json({ 
-      success: true, 
-      message: "Contact message sent successfully", 
-      data: contactMessage 
+
+    res.json({
+      success: true,
+      message: "Contact message sent successfully",
+      data: contactMessage
     });
 
   } catch (error) {
@@ -41,18 +37,17 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
   }
 };
 
-// Get all active contact messages
- const getContactMessages = async (req, res) => {
+const getContactMessages = async (req, res) => {
   try {
     const { status, start_date, end_date, page = 1, limit = 10 } = req.query;
-    
+
     let query = {};
-    
+
     // Filter by status
     if (status) {
       query.status = status;
     }
-    
+
     // Filter by date range
     if (start_date || end_date) {
       query.createdAt = {};
@@ -74,8 +69,8 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
 
     const total = await ContactUs.countDocuments(query);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: messages,
       pagination: {
         total,
@@ -89,15 +84,15 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
 };
 
 // Get contact message by ID
- const getContactMessageById = async (req, res) => {
+const getContactMessageById = async (req, res) => {
   try {
     const message = await ContactUs.findById(req.params.id)
       .populate("created_by", "name email");
-    
+
     if (!message) {
       return res.json({ success: false, message: "Contact message not found" });
     }
-    
+
     res.json({ success: true, data: message });
   } catch (error) {
     res.json({ success: false, message: "Internal Server Error" });
@@ -105,17 +100,17 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
 };
 
 // Get contact messages by email
- const getContactMessagesByEmail = async (req, res) => {
+const getContactMessagesByEmail = async (req, res) => {
   try {
     const { email } = req.params;
-    
-    const messages = await ContactUs.find({ 
+
+    const messages = await ContactUs.find({
       email: email.toLowerCase(),
-      status: "active" 
+      status: "active"
     })
       .populate("created_by", "name email")
       .sort({ createdAt: -1 });
-      
+
     res.json({ success: true, data: messages });
   } catch (error) {
     res.json({ success: false, message: "Internal Server Error" });
@@ -123,23 +118,23 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
 };
 
 // Edit/Update contact message
- const editContactMessage = async (req, res) => {
+const editContactMessage = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const message = await ContactUs.findById(id);
     if (!message) {
       return res.json({ success: false, message: "Contact message not found" });
     }
 
     const { email } = req.body;
-    
+
     // Check if email is being changed and if it already exists
     if (email && email !== message.email) {
       const emailExists = await checkExistingRecord(
-        ContactUs, 
-        { email, _id: { $ne: id } }, 
-        "email", 
+        ContactUs,
+        { email, _id: { $ne: id } },
+        "email",
         res
       );
       if (emailExists) return;
@@ -150,10 +145,10 @@ import { handleValidationError, checkExistingRecord } from "./baseController.js"
       runValidators: true
     }).populate("created_by", "name email");
 
-    res.json({ 
-      success: true, 
-      message: "Contact message updated successfully", 
-      data: updated 
+    res.json({
+      success: true,
+      message: "Contact message updated successfully",
+      data: updated
     });
   } catch (error) {
     console.log("error", error);
@@ -183,10 +178,10 @@ const deleteContactMessage = async (req, res) => {
 
 
 // Permanent delete (use with caution)
- const permanentDeleteContactMessage = async (req, res) => {
+const permanentDeleteContactMessage = async (req, res) => {
   try {
     const message = await ContactUs.findById(req.params.id);
-    
+
     if (!message) {
       return res.json({ success: false, message: "Contact message not found" });
     }
@@ -200,10 +195,10 @@ const deleteContactMessage = async (req, res) => {
 };
 
 // Mark message as read/replied
- const markAsReplied = async (req, res) => {
+const markAsReplied = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const message = await ContactUs.findById(id);
     if (!message) {
       return res.json({ success: false, message: "Contact message not found" });
@@ -212,24 +207,24 @@ const deleteContactMessage = async (req, res) => {
     // You can add a custom field for replied status if needed
     // For now, we'll update the message with a note
     const updated = await ContactUs.findByIdAndUpdate(
-      id, 
-      { 
-        $set: { 
+      id,
+      {
+        $set: {
           "replied": true,
           "repliedAt": new Date(),
           "repliedBy": req.user._id
-        } 
-      }, 
+        }
+      },
       {
         new: true,
         runValidators: true
       }
     ).populate("created_by", "name email");
 
-    res.json({ 
-      success: true, 
-      message: "Message marked as replied", 
-      data: updated 
+    res.json({
+      success: true,
+      message: "Message marked as replied",
+      data: updated
     });
   } catch (error) {
     res.json({ success: false, message: "Internal Server Error" });
@@ -237,7 +232,7 @@ const deleteContactMessage = async (req, res) => {
 };
 
 // Get message statistics
- const getContactStats = async (req, res) => {
+const getContactStats = async (req, res) => {
   try {
     const stats = await ContactUs.aggregate([
       {
@@ -274,8 +269,8 @@ const deleteContactMessage = async (req, res) => {
       { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } }
     ]);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: {
         total: totalMessages,
         active: activeMessages,
@@ -290,14 +285,14 @@ const deleteContactMessage = async (req, res) => {
 };
 
 // Search contact messages
- const searchContactMessages = async (req, res) => {
+const searchContactMessages = async (req, res) => {
   try {
     const { query } = req.query;
-    
+
     if (!query) {
-      return res.json({ 
-        success: false, 
-        message: "Please provide a search query" 
+      return res.json({
+        success: false,
+        message: "Please provide a search query"
       });
     }
 
@@ -313,8 +308,8 @@ const deleteContactMessage = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(20);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: messages,
       count: messages.length
     });
@@ -324,21 +319,21 @@ const deleteContactMessage = async (req, res) => {
 };
 
 // Bulk update status
- const bulkUpdateStatus = async (req, res) => {
+const bulkUpdateStatus = async (req, res) => {
   try {
     const { ids, status } = req.body;
-    
+
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.json({ 
-        success: false, 
-        message: "Please provide an array of message IDs" 
+      return res.json({
+        success: false,
+        message: "Please provide an array of message IDs"
       });
     }
 
     if (!status || !["active", "inactive"].includes(status)) {
-      return res.json({ 
-        success: false, 
-        message: "Please provide a valid status (active/inactive)" 
+      return res.json({
+        success: false,
+        message: "Please provide a valid status (active/inactive)"
       });
     }
 
@@ -347,8 +342,8 @@ const deleteContactMessage = async (req, res) => {
       { $set: { status } }
     );
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `${result.modifiedCount} messages updated successfully`,
       data: result
     });
@@ -357,16 +352,16 @@ const deleteContactMessage = async (req, res) => {
   }
 };
 
-export { 
-    addContactMessage, 
+export {
+  addContactMessage,
   getContactMessages,
-  getContactMessageById, 
+  getContactMessageById,
   getContactMessagesByEmail,
-  editContactMessage, 
+  editContactMessage,
   deleteContactMessage,
   permanentDeleteContactMessage,
   markAsReplied,
-  getContactStats, 
-  searchContactMessages, 
+  getContactStats,
+  searchContactMessages,
   bulkUpdateStatus
-      };
+};

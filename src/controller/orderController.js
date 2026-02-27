@@ -610,6 +610,119 @@ const allOrder = async (req, res) => {
   }
 };
 
+
+const getPieceAndWeightInParcel = async (req, res) => {
+  // const { customerId } = req.params;
+  
+  try {
+    // Handle both formats: tracking_numbers[] and tracking_numbers
+    let trackingNumbersArray = [];
+    
+    // Check for tracking_numbers[] format
+    if (req.query['tracking_numbers[]']) {
+      const tnArray = req.query['tracking_numbers[]'];
+      trackingNumbersArray = Array.isArray(tnArray) ? tnArray : [tnArray];
+    }
+    // Check for tracking_numbers format
+    else if (req.query.tracking_numbers) {
+      const tn = req.query.tracking_numbers;
+      trackingNumbersArray = Array.isArray(tn) ? tn : [tn];
+    }
+    
+    // Filter out any empty values
+    trackingNumbersArray = trackingNumbersArray.filter(tn => tn && tn.trim() !== '');
+    
+    console.log("Received tracking numbers:", trackingNumbersArray);
+    
+    if (!trackingNumbersArray.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide at least one tracking number",
+        debug: {
+          query: req.query,
+          parsed: trackingNumbersArray
+        }
+      });
+    }
+
+    // Rest of your code remains the same...
+    const orders = await Order.find({
+      tracking_number: { $in: trackingNumbersArray },
+      // customerId: customerId,
+      is_deleted: "0"
+    });
+
+    if (!orders.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No orders found for the provided tracking numbers",
+        tracking_numbers_provided: trackingNumbersArray
+      });
+    }
+
+    // Get all parcel IDs from the orders
+    const parcelIds = orders.map(order => order.customerId);
+    console.log("parcelIds", parcelIds);
+
+    // Find all parcels associated with these orders
+    const parcels = await Parcel.find({
+      customerId: { $in: parcelIds },
+      // customerId: customerId,
+      is_deleted: "0"
+    });
+
+    // Calculate totals
+    let totalPieceNumber = 0;
+    let totalWeight = 0;
+
+    parcels.forEach(parcel => {
+      totalPieceNumber += parseInt(parcel.piece_number) || 0;
+      
+      if (parcel.piece_details && Array.isArray(parcel.piece_details)) {
+        parcel.piece_details.forEach(detail => {
+          totalWeight += parseFloat(detail.weight) || 0;
+        });
+      }
+    });
+
+    // Prepare response data
+    const responseData = {
+      success: true,
+      data: {
+        // customerId: customerId,
+        tracking_numbers: trackingNumbersArray,
+        total_piece_number: totalPieceNumber,
+        total_weight: totalWeight,
+        parcel_count: parcels.length,
+        order_count: orders.length,
+        parcels_details: parcels.map(parcel => ({
+          parcel_id: parcel._id,
+          piece_number: parcel.piece_number,
+          piece_details: parcel.piece_details
+        }))
+      }
+    };
+
+    // Encrypt the response data
+    // const encryptedData = encryptData(responseData);
+    
+    // return res.status(200).json({
+    //   success: true,
+    //   encrypted: true,
+    //   data: encryptedData,
+    // });
+
+    return res.status(200).json(responseData);
+
+  } catch (error) {
+    console.error("Error in getPieceAndWeightInParcel:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error"
+    });
+  }
+};
+
     
 
-export {addUpdateOrder,getNewBeneficiaryId,allOrder,getParcelByIds, createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };
+export {getPieceAndWeightInParcel,addUpdateOrder,getNewBeneficiaryId,allOrder,getParcelByIds, createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };

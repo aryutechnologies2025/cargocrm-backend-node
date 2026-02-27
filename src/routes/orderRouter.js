@@ -6,7 +6,7 @@ import { createOrder, getParcelByIds,
     getOrderById, 
     getSenderByBeneficiary,
     addUpdateOrder,getNewBeneficiaryId,
-    getOrders,allOrder } from "../controller/orderController.js";
+    getOrders,allOrder,getPieceAndWeightInParcel } from "../controller/orderController.js";
 
 
 const orderRouter = express.Router();
@@ -23,4 +23,5 @@ orderRouter.delete("/delete-orders/:id", deleteOrder);
 orderRouter.post("/add-update-order", addUpdateOrder);
 orderRouter.get("/get-new-beneficiary-id/:id", getNewBeneficiaryId);
 orderRouter.get("/all-order", allOrder);
+orderRouter.get("/get-piece-and-weight-in-parcel", getPieceAndWeightInParcel);
 export default orderRouter;
