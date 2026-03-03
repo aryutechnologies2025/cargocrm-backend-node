@@ -248,10 +248,20 @@ const customerDetailByPhoneNumber = async(req,res) =>{
 
 const getCustomerName = async(req,res) =>{
   try{
-    const getCustomerName = await Customer.find({}).select("name,phone,email,address,city,country,postcode");
+    const getCustomerName = await Customer.findOne({});
+    const formattedData = {
+      id: getCustomerName._id,
+      name: getCustomerName.name,
+      email: getCustomerName.email,
+      phone: getCustomerName.phone,
+      address: getCustomerName.address,
+      city: getCustomerName.city,
+      country: getCustomerName.country,
+      postcode: getCustomerName.postcode
+    };
     const responseData = {
       success: true,
-      data: getCustomerName
+      data: formattedData
     };
     const encryptedData = encryptData(responseData);
     return res.json({ success: true, encrypted: true, data: encryptedData });
@@ -265,7 +275,7 @@ const getBeneficiaryDetails = async(req,res) =>{
     const {id} = req.query;
     const beneficiaryDetails = await Beneficiary.findOne({ customerId: id })
     .sort({ createdAt: -1 })
-    .select("name email phone address city country,postcode");
+    .select("name email phone address city country postcode");
     
     const responseData = {
       success: true,

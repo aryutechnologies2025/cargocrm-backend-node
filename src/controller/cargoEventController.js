@@ -49,14 +49,24 @@ const TrackingNumberInEvent = async (req, res) => {
         }));
 
 
-        const currentEvents = await Event.find({
+        const currentEvents = await Event.findOne({
             tracking_number: { $in: trackingObjectIds }
         })
-            .populate("event_name", "name")
-            .populate({
-                path: "tracking_number",
-                match: { tracking_number: tracking_number }
-            });
+            .populate("event_name", "name");
+
+        const formattedCurrentEvents = currentEvents ? [{
+            id: currentEvents._id,
+            event_name: currentEvents.event_name?.name,
+            cargo_mode: currentEvents.tracking_number?.cargo_mode,
+            packed: currentEvents.tracking_number?.packed,
+            quantity: currentEvents.quantity,
+            weight: currentEvents.weight,
+            createdAt: currentEvents.createdAt,
+            event_date: currentEvents.event_date,
+            event_time: currentEvents.event_time,
+            tracking_number: currentEvents.tracking_number?.tracking_number
+        }] : [];
+           
 
 //        const eventDateAndTime = await Event.find({
 //     tracking_number: { $in: trackingObjectIds },
@@ -102,7 +112,8 @@ const TrackingNumberInEvent = async (req, res) => {
         //   success: true, 
         //   data: formattedEvents, 
         //   beneficiary: formattedBeneficiary,
-        //   parcel: parcelDetails
+        //   parcel: parcelDetails,
+        //   event:formattedCurrentEvents
         // });
 
         const responseData = {
