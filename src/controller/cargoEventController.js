@@ -19,6 +19,10 @@ const TrackingNumberInEvent = async (req, res) => {
             tracking_number: tracking_number
         });
 
+        if(!trackingDocs || trackingDocs.length === 0){
+            return res.json({ success: false, message: "No tracking number found" });
+        }
+
         console.log("trackingDocs", trackingDocs);
 
         const trackingObjectIds = trackingDocs.map(doc => doc._id);
@@ -121,11 +125,13 @@ const TrackingNumberInEvent = async (req, res) => {
             data: formattedEvents,
             beneficiary: formattedBeneficiary,
             parcel: parcelDetails,
-            event:currentEvents
+            event:formattedCurrentEvents
         };
 
-        const encryptedData = encryptData(responseData);
-        return res.status(200).json({ success: true, encrypted: true, data: encryptedData });
+        res.status(200).json({ success: true, data: responseData });
+
+        // const encryptedData = encryptData(responseData);
+        // return res.status(200).json({ success: true, encrypted: true, data: encryptedData });
 
     } catch (error) {
         res.json({ success: false, message: error.message || "Internal Server Error" });

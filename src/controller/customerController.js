@@ -274,34 +274,24 @@ const getCustomerName = async(req,res) =>{
 const getBeneficiaryDetails = async(req,res) =>{
   try{
     const {id} = req.query;
-    const customerDetails = await Customer.findById(id);
-    const formattedCustomerDetails = {
-      id: customerDetails._id,
-      name: customerDetails.name,
-      email: customerDetails.email,
-      phone: customerDetails.phone,
-      address: customerDetails.address,
-      city: customerDetails.city,
-      country: customerDetails.country,
-      postcode: customerDetails.postcode
-      };
-    const beneficiaryDetails = await Beneficiary.findOne({ customerId: id })
-    .sort({ createdAt: -1 });
+    const beneficiary = await Beneficiary.findById(id);
+    const beneficiaryDetails = await Beneficiary.findOne({customerId: beneficiary.customerId, is_deleted: "0" }).sort({ createdAt: -1 });
     const formattedBeneficiaryDetails = {
       id: beneficiaryDetails._id,
-      name:beneficiaryDetails.name,
-      email:beneficiaryDetails.email,
-      phone:beneficiaryDetails.phone,
-      address:beneficiaryDetails.address,
-      city:beneficiaryDetails.city,
-      country:beneficiaryDetails.country,
-      postcode:beneficiaryDetails.postcode,
+      name: beneficiaryDetails.name,
+      phone: beneficiaryDetails.phone,
+      email: beneficiaryDetails.email,
+      address: beneficiaryDetails.address,
+      city: beneficiaryDetails.city,
+      country: beneficiaryDetails.country,
+      postcode: beneficiaryDetails.postcode,
     };
+   
     const responseData = {
       success: true,
-      customer: formattedCustomerDetails,
       beneficiary: formattedBeneficiaryDetails
     };
+    // res.status(200).json({ success: true, data: responseData });
     const encryptedData = encryptData(responseData);
     return res.json({ success: true, encrypted: true, data: encryptedData });
   } catch (error) {
