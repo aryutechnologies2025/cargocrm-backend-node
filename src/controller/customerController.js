@@ -248,21 +248,22 @@ const customerDetailByPhoneNumber = async(req,res) =>{
 
 const getCustomerName = async(req,res) =>{
   try{
-    const getCustomerName = await Customer.find({});
-    const formattedData = {
-      id: getCustomerName._id,
-      name: getCustomerName.name
-    };
-    const getBeneficiaryName = await Customer.find({});
-    const formattedBeneficiaryData = {
-      id: getBeneficiaryName._id,
-      name: getBeneficiaryName.name
-    };
+    const getCustomerName = await Customer.find();
+    const formattedCustomerData = getCustomerName.map((customer) => ({
+      id: customer._id,
+      name: customer.name
+    }));
+    const getBeneficiaryName = await Beneficiary.find();
+    const formattedBeneficiaryData = getBeneficiaryName.map((beneficiary) => ({
+      id: beneficiary._id,
+      name: beneficiary.name
+    }));
     const responseData = {
       success: true,
-      customer: formattedData,
+      customer: formattedCustomerData,
       beneficiary: formattedBeneficiaryData
     };
+    // res.status(200).json({ success: true, data: responseData });
     const encryptedData = encryptData(responseData);
     return res.json({ success: true, encrypted: true, data: encryptedData });
   } catch (error) {
