@@ -251,13 +251,7 @@ const getCustomerName = async(req,res) =>{
     const getCustomerName = await Customer.findOne({});
     const formattedData = {
       id: getCustomerName._id,
-      name: getCustomerName.name,
-      email: getCustomerName.email,
-      phone: getCustomerName.phone,
-      address: getCustomerName.address,
-      city: getCustomerName.city,
-      country: getCustomerName.country,
-      postcode: getCustomerName.postcode
+      name: getCustomerName.name
     };
     const responseData = {
       success: true,
@@ -273,13 +267,33 @@ const getCustomerName = async(req,res) =>{
 const getBeneficiaryDetails = async(req,res) =>{
   try{
     const {id} = req.query;
+    const customerDetails = await Customer.findById(id);
+    const formattedCustomerDetails = {
+      id: customerDetails._id,
+      name: customerDetails.name,
+      email: customerDetails.email,
+      phone: customerDetails.phone,
+      address: customerDetails.address,
+      city: customerDetails.city,
+      country: customerDetails.country,
+      postcode: customerDetails.postcode
+      };
     const beneficiaryDetails = await Beneficiary.findOne({ customerId: id })
-    .sort({ createdAt: -1 })
-    .select("name email phone address city country postcode");
-    
+    .sort({ createdAt: -1 });
+    const formattedBeneficiaryDetails = {
+      id: beneficiaryDetails._id,
+      name:beneficiaryDetails.name,
+      email:beneficiaryDetails.email,
+      phone:beneficiaryDetails.phone,
+      address:beneficiaryDetails.address,
+      city:beneficiaryDetails.city,
+      country:beneficiaryDetails.country,
+      postcode:beneficiaryDetails.postcode,
+    };
     const responseData = {
       success: true,
-      data: beneficiaryDetails
+      customer: formattedCustomerDetails,
+      beneficiary: formattedBeneficiaryDetails
     };
     const encryptedData = encryptData(responseData);
     return res.json({ success: true, encrypted: true, data: encryptedData });
