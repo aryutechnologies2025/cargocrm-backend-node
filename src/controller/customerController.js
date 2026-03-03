@@ -248,14 +248,20 @@ const customerDetailByPhoneNumber = async(req,res) =>{
 
 const getCustomerName = async(req,res) =>{
   try{
-    const getCustomerName = await Customer.findOne({});
+    const getCustomerName = await Customer.find({});
     const formattedData = {
       id: getCustomerName._id,
       name: getCustomerName.name
     };
+    const getBeneficiaryName = await Customer.find({});
+    const formattedBeneficiaryData = {
+      id: getBeneficiaryName._id,
+      name: getBeneficiaryName.name
+    };
     const responseData = {
       success: true,
-      data: formattedData
+      customer: formattedData,
+      beneficiary: formattedBeneficiaryData
     };
     const encryptedData = encryptData(responseData);
     return res.json({ success: true, encrypted: true, data: encryptedData });
