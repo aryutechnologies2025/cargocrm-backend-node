@@ -644,7 +644,14 @@ const allOrder = async (req, res) => {
         .populate({
           path: "customerId",
           select: "name address email phone city country",
-          match: customer_name ? { name: { $regex: `^${customer_name}$`, $options: 'i' } } : {}
+          match: customer_name ? { 
+            $or: [
+              { name: { $regex: `^${customer_name}$`, $options: 'i' } },
+              { phone: { $regex: `^${customer_name}$`, $options: 'i' } },
+              { email: { $regex: `^${customer_name}$`, $options: 'i' } },
+              { postcode: { $regex: `^${customer_name}$`, $options: 'i' } }
+            ]
+          } : {}
         })
         .populate("created_by", "name email")
         .sort({ createdAt: -1 });
@@ -654,7 +661,15 @@ const allOrder = async (req, res) => {
         .populate({
           path: "customerId",
           select: "name address email phone city country",
-          match: customer_name ? { name: { $regex: customer_name, $options: 'i' } } : {}
+          // match: customer_name ? { name: { $regex: customer_name, $options: 'i' } } : {}
+          match: customer_name ? { 
+            $or: [
+              { name: { $regex: `^${customer_name}$`, $options: 'i' } },
+              { phone: { $regex: `^${customer_name}$`, $options: 'i' } },
+              { email: { $regex: `^${customer_name}$`, $options: 'i' } },
+              { postcode: { $regex: `^${customer_name}$`, $options: 'i' } }
+            ]
+          } : {}
         })
         .populate("created_by", "name email")
         .sort({ createdAt: -1 });
@@ -665,16 +680,20 @@ const allOrder = async (req, res) => {
     console.log("Filtered orders count:", orders.length);
 
     const beneficiaryDetails = await Beneficiary.find({ is_deleted: "0" })
-      .populate("customerId", "name address");
+      .populate("customerId", "name address ");
 
     let filteredBeneficiaries = beneficiaryDetails;
     if (beneficiary_name) {
       filteredBeneficiaries = beneficiaryDetails.filter(beneficiary => 
-        beneficiary.name && 
-        beneficiary.name.toLowerCase().includes(beneficiary_name.toLowerCase())
+        beneficiary.name && (
+          beneficiary.name.match(new RegExp(`^${beneficiary_name}$`, 'i')) ||
+          (beneficiary.phone && beneficiary.phone.match(new RegExp(`^${beneficiary_name}$`, 'i'))) ||
+          (beneficiary.email && beneficiary.email.match(new RegExp(`^${beneficiary_name}$`, 'i'))) ||
+          (beneficiary.city && beneficiary.city.match(new RegExp(`^${beneficiary_name}$`, 'i')))
+        )
       );
       
-      if (beneficiary_name) {
+      if (filteredBeneficiaries.length > 0) {
         const beneficiaryCustomerIds = filteredBeneficiaries.map(b => b.customerId?._id?.toString()).filter(id => id);
         orders = orders.filter(order => 
           beneficiaryCustomerIds.includes(order.customerId?._id?.toString())
