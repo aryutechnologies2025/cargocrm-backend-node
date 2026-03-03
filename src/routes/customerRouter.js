@@ -1,6 +1,6 @@
 import express from "express";
 import useAuth from "../middlewares/authMiddleware.js";
-import {addCustomers, getCustomer, getAllCustomers, addCustomer, deleteCustomer, editCustomer, getCustomerById, getCustomers ,customerDetailByPhoneNumber} from "../controller/customerController.js";
+import {getCustomerName,getBeneficiaryDetails,addCustomers, getCustomer, getAllCustomers, addCustomer, deleteCustomer, editCustomer, getCustomerById, getCustomers ,customerDetailByPhoneNumber} from "../controller/customerController.js";
 
 const customerRouter = express.Router();
 
@@ -16,5 +16,8 @@ customerRouter.get("/view-customerss", getAllCustomers);
 customerRouter.get("/view-customerss/:id", getCustomerById);
 customerRouter.get("/customer-detail-by-phone-number/:id", customerDetailByPhoneNumber);
 
+
+customerRouter.get("/get-customer-name", getCustomerName);
+customerRouter.get("/get-beneficiary-details", getBeneficiaryDetails);
 
 export default customerRouter;

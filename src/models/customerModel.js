@@ -33,6 +33,9 @@ const customerSchema = new mongoose.Schema({
     type: String,
    
   },
+  postcode:{
+    type:String
+  },
   status: {
     type: String,
     default: "1"

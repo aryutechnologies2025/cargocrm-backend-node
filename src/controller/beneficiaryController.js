@@ -199,7 +199,7 @@ const deleteBeneficiary = async (req, res) => {
 
 const addUpdateBeneficiary = async (req, res) => {
   try {
-    const { id, customerId, name, email, phone, address, city, country, status } = req.body;
+    const { id, customerId, name,postcode, email, phone, address, city, country, status } = req.body;
 
     if (id) {
       const existingBeneficiary = await Beneficiary.findById(id);
@@ -218,6 +218,7 @@ const addUpdateBeneficiary = async (req, res) => {
       existingBeneficiary.address = address;
       existingBeneficiary.city = city;
       existingBeneficiary.country = country;
+      existingBeneficiary.postcode = postcode;
       existingBeneficiary.status = status;
 
       await existingBeneficiary.save();
@@ -240,6 +241,7 @@ const addUpdateBeneficiary = async (req, res) => {
       address,
       city,
       country,
+      postcode,
       status
     });
 

@@ -244,11 +244,37 @@ const TrackingNumberInEvent = async (req, res) => {
       event.tracking_number && event.tracking_number.length > 0
     );
 
-    let beneficiaryDetails = [];
+    const formattedEvents = filteredEvents.map((event) => ({
+      id: event._id,
+      event_name: event.event_name?.name,
+      cargo_mode: event.tracking_number?.cargo_mode,
+      packed: event.tracking_number?.packed,
+      quantity: event.quantity,
+      weight: event.weight,
+    }));
+
+    // let beneficiaryDetails = [];
     
-      beneficiaryDetails = await Beneficiary.findOne({
+      const beneficiaryDetails = await Beneficiary.find({
         tracking_number: tracking_number
-      }).populate("customerId", "name email phone");
+      }).populate("customerId", "name email phone address city country");
+
+
+      const formattedBeneficiary = beneficiaryDetails.map((beneficiary) => ({
+      id: beneficiary._id,
+      beneficiary_name: beneficiary.name,
+      beneficiary_email: beneficiary.email,
+      beneficiary_phone: beneficiary.phone,
+      beneficiary_address: beneficiary.address,
+      beneficiary_city: beneficiary.city,
+      beneficiary_country: beneficiary.country,
+      customer_name: beneficiary.customerId?.name,
+      customer_email: beneficiary.customerId?.email,
+      customer_phone: beneficiary.customerId?.phone,
+      customer_address: beneficiary.customerId?.address,
+      customer_city: beneficiary.customerId?.city,
+      customer_country: beneficiary.customerId?.country,
+      }));
 
       console.log("beneficiaryDetails", beneficiaryDetails);
 
@@ -260,8 +286,8 @@ const TrackingNumberInEvent = async (req, res) => {
 
     res.json({ 
       success: true, 
-      data: filteredEvents, 
-      beneficiary: beneficiaryDetails,
+      data: formattedEvents, 
+      beneficiary: formattedBeneficiary,
       parcel: parcelDetails
     });
 

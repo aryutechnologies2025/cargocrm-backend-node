@@ -1,4 +1,5 @@
 
+import Beneficiary from "../models/beneficiaryModel.js";
 import Customer from "../models/customerModel.js";
 import { encryptData } from "../utils/encryption.js";
 import { checkExistingRecord, handleValidationError } from "./baseController.js";
@@ -136,7 +137,7 @@ const generateCustomerId = async () => {
 
 const addCustomers = async (req, res) => {
     try {
-        const { name, phone, email, address, city, country, created_by } = req.body;
+        const { name, phone, email, address, city, country,postcode, created_by } = req.body;
         
         if (req.body.id) {
             const existingCustomer = await Customer.findById(req.body.id);
@@ -147,6 +148,7 @@ const addCustomers = async (req, res) => {
                 existingCustomer.address = address;
                 existingCustomer.city = city;
                 existingCustomer.country = country;
+                existingCustomer.postcode = postcode;
                 await existingCustomer.save();
                 
                 return res.json({ 
@@ -157,7 +159,7 @@ const addCustomers = async (req, res) => {
             }
         }
 
-        const customer = new Customer({ name, phone, email, address, city, country, created_by });
+        const customer = new Customer({ name, phone, email, address,postcode, city, country, created_by });
         await customer.save();
         
         res.json({ 
@@ -244,7 +246,39 @@ const customerDetailByPhoneNumber = async(req,res) =>{
     }
 }
 
+const getCustomerName = async(req,res) =>{
+  try{
+    const getCustomerName = await Customer.find({}).select("name,phone,email,address,city,country,postcode");
+    const responseData = {
+      success: true,
+      data: getCustomerName
+    };
+    const encryptedData = encryptData(responseData);
+    return res.json({ success: true, encrypted: true, data: encryptedData });
+  } catch (error) {
+    res.json({ success: false, message: "Internal Server Error" });
+  }
+}
+
+const getBeneficiaryDetails = async(req,res) =>{
+  try{
+    const {id} = req.query;
+    const beneficiaryDetails = await Beneficiary.findOne({ customerId: id })
+    .sort({ createdAt: -1 })
+    .select("name email phone address city country,postcode");
+    
+    const responseData = {
+      success: true,
+      data: beneficiaryDetails
+    };
+    const encryptedData = encryptData(responseData);
+    return res.json({ success: true, encrypted: true, data: encryptedData });
+  } catch (error) {
+    res.json({ success: false, message: "Internal Server Error" });
+  }
+}
+
 // export { addCustomers, getCustomer, getAllCustomers };
 
 
-export {customerDetailByPhoneNumber,addCustomers, getCustomer, getAllCustomers, addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };
+export {getCustomerName,getBeneficiaryDetails,customerDetailByPhoneNumber,addCustomers, getCustomer, getAllCustomers, addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };

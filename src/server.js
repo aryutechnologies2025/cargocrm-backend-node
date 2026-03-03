@@ -22,6 +22,7 @@ import loginLogRouter from "./routes/loginLogRoutes.js";
 import collectionRouter from "./routes/collectionRouter.js";
 import eventMasterRouter from "./routes/eventMasterRouter.js";
 import settingRouter from "./routes/settingRouter.js";
+import cargoEventRouter from "./routes/cargoEventRouter.js";
 dotenv.config(); // Load environment variables
 
 // Initialize app
@@ -61,7 +62,7 @@ app.use("/api/logs",useAuth, loginLogRouter);
 app.use("/api/collections",useAuth, collectionRouter);
 app.use("/api/eventmasters",useAuth, eventMasterRouter);
 app.use("/api/settings",useAuth, settingRouter);
-
+app.use("/api/cargo-event", cargoEventRouter);
 //  Test Route
 app.get("/api", (req, res) => res.send("Cargo backend API running"));
 app.get("/api/test", (req, res) => res.send("Cargo backend API TEST running"));
