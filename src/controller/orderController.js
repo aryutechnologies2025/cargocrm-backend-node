@@ -411,6 +411,20 @@ const addUpdateOrder = async (req, res) => {
 
     await order.save();
 
+    if(order){
+      const customer = await Customer.findById(order.customerId);
+      if (customer) {
+        await Beneficiary.updateMany(
+          { customerId: customer._id },
+          { tracking_number: order.tracking_number }
+        );
+      }
+      // await Customer.updateMany(
+      //   { _id: order.customerId },
+      //   { tracking_number: order._id }
+      // );
+    }
+
     return res.json({
       success: true,
       message: "Order added successfully",

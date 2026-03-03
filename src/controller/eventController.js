@@ -1,10 +1,15 @@
 import ContainerRun from "../models/containerRunModel.js";
 import EventMaster from "../models/eventMasterModel.js";
 import Event from "../models/eventModel.js";
+import EventLog from "../models/evertLogModel.js";
 import Order from "../models/orderModel.js";
 import { encryptData } from "../utils/encryption.js";
 import { handleValidationError } from "./baseController.js";
+import mongoose from "mongoose";
+import Customer from "../models/customerModel.js";
 
+import Beneficiary from "../models/beneficiaryModel.js";
+import Parcel from "../models/parcelModel.js";
 
 
 const addEvent = async (req, res) => {
@@ -33,6 +38,18 @@ const addEvent = async (req, res) => {
     await events.populate([
       { path: "created_by", select: "name email" }
     ]);
+
+    const EventLogs = new EventLog({
+      event_name,
+      tracking_number,
+      quantity,
+      weight,
+      event_date,
+      event_time,
+      customer_id : events.customer_id
+    });
+
+    await EventLogs.save();
 
     res.json({
       success: true,
@@ -155,6 +172,18 @@ const editEvent = async (req, res) => {
       runValidators: true
     }).populate("created_by", "name email");
 
+    const EventLogs = new EventLog({
+      event_name: updated.event_name,
+      tracking_number: updated.tracking_number,
+      quantity: updated.quantity,
+      weight: updated.weight,
+      event_date: updated.event_date,
+      event_time: updated.event_time,
+      customer_id : updated.customer_id
+    });
+
+    await EventLogs.save();
+
     res.json({
       success: true,
       message: "Event updated successfully",
@@ -184,11 +213,69 @@ const deleteEvent = async (req, res) => {
 };
 
 
+const TrackingNumberInEvent = async (req, res) => {
+  try {
+    let { tracking_number } = req.body;
+    console.log("tracking_number", tracking_number);
+
+    if (!tracking_number) {
+      return res.json({ success: false, message: "Tracking number is required" });
+    }
+
+    const trackingDocs = await Order.find({
+      tracking_number: tracking_number
+    });
+
+    console.log("trackingDocs", trackingDocs);
+
+    const trackingObjectIds = trackingDocs.map(doc => doc._id);
+    console.log("trackingObjectIds", trackingObjectIds);
+    
+    const events = await EventLog.find({
+      tracking_number: { $in: trackingObjectIds }
+    })
+    .populate("event_name", "name")
+    .populate({
+      path: "tracking_number",
+      match: { tracking_number: tracking_number }
+    });
+
+    const filteredEvents = events.filter(event => 
+      event.tracking_number && event.tracking_number.length > 0
+    );
+
+    let beneficiaryDetails = [];
+    
+      beneficiaryDetails = await Beneficiary.findOne({
+        tracking_number: tracking_number
+      }).populate("customerId", "name email phone");
+
+      console.log("beneficiaryDetails", beneficiaryDetails);
+
+      const parcelDetails = await Parcel.findOne({
+        customerId: beneficiaryDetails ? beneficiaryDetails.customerId : null,
+        // customerId: { $in: beneficiaryDetails.map(b => b.customerId) }
+      });
+    
+
+    res.json({ 
+      success: true, 
+      data: filteredEvents, 
+      beneficiary: beneficiaryDetails,
+      parcel: parcelDetails
+    });
+
+  } catch (error) {
+    res.json({ success: false, message: error.message || "Internal Server Error" });
+  }
+};
+
+
 export {
   addEvent,
   getEvents,
   getEventById,
   editEvent,
   deleteEvent,
-
+  TrackingNumberInEvent
 };

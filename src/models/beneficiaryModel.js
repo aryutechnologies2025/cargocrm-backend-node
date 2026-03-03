@@ -6,6 +6,9 @@ const beneficiarySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
   },
+  tracking_number: {
+    type: String,
+  },
   beneficiary_id: {
     type: String,
     unique: true

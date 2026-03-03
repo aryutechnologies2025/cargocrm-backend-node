@@ -1,7 +1,7 @@
 import express from "express";
 
 
-import { addEvent, deleteEvent, editEvent, getEventById, getEvents } from "../controller/eventController.js";
+import {TrackingNumberInEvent, addEvent, deleteEvent, editEvent, getEventById, getEvents } from "../controller/eventController.js";
 import useAuth from "../middlewares/authMiddleware.js";
 
 const eventRouter = express.Router();
@@ -15,6 +15,7 @@ eventRouter.get("/view-events" , getEvents);
 eventRouter.get("/view-events/:id" , getEventById);
 eventRouter.put("/edit-events/:id" , editEvent);
 eventRouter.delete("/delete-events/:id" , deleteEvent);
+eventRouter.get("/tracking-number-event" , TrackingNumberInEvent);
 
 
 

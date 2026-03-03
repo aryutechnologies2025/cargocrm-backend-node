@@ -130,8 +130,8 @@ const getBeneficiaries = async (req, res) => {
 
 const getBeneficiaryById = async (req, res) => {
   try {
-    const beneficiary = await Beneficiary.findById(req.params.id)
-      .populate("created_by", "name email");
+    const beneficiary = await Beneficiary.find({customerId: req.params.id, is_deleted: "0" });
+      // .populate("created_by", "name email");
 
     if (!beneficiary) {
       return res.json({ success: false, message: "Beneficiary not found" });
