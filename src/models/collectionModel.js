@@ -7,6 +7,15 @@ const collectionSchema = new mongoose.Schema({
     address:{
         type:String
     },
+    city:{
+        type:String
+    },
+    country:{
+        type:String
+    },
+    postcode:{
+        type:String
+    },
     date_time:{
         type:String
     },

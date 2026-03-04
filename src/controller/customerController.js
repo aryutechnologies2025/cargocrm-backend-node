@@ -139,7 +139,7 @@ const addCustomers = async (req, res) => {
     try {
         const { name, phone, email, address, city, country,postcode, created_by } = req.body;
         
-        if (req.body.id) {
+        if (req.body.id && req.body.mode !== "existing") {
             const existingCustomer = await Customer.findById(req.body.id);
             if (existingCustomer) {
                 existingCustomer.name = name;
@@ -270,6 +270,25 @@ const getCustomerName = async(req,res) =>{
     res.json({ success: false, message: "Internal Server Error" });
   }
 }
+const getBeneficiaryName = async(req,res) =>{
+  const {id} = req.query;
+  try{
+    const getBeneficiaryName = await Beneficiary.find({customerId:id});
+    const formattedBeneficiaryData = getBeneficiaryName.map((beneficiary) => ({
+      id: beneficiary._id,
+      name: beneficiary.name
+    }));
+    const responseData = {
+      success: true,
+      beneficiary: formattedBeneficiaryData
+    };
+    // res.status(200).json({ success: true, data: responseData });
+    const encryptedData = encryptData(responseData);
+    return res.json({ success: true, encrypted: true, data: encryptedData });
+  } catch (error) {
+    res.json({ success: false, message: "Internal Server Error" });
+  }
+}
 
 const getBeneficiaryDetails = async(req,res) =>{
   try{
@@ -302,4 +321,4 @@ const getBeneficiaryDetails = async(req,res) =>{
 // export { addCustomers, getCustomer, getAllCustomers };
 
 
-export {getCustomerName,getBeneficiaryDetails,customerDetailByPhoneNumber,addCustomers, getCustomer, getAllCustomers, addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };
+export {getCustomerName,getBeneficiaryDetails,getBeneficiaryName,customerDetailByPhoneNumber,addCustomers, getCustomer, getAllCustomers, addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };

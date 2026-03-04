@@ -62,7 +62,7 @@ const beneficiarySchema = new mongoose.Schema({
 });
 
 beneficiarySchema.index({ name: 1 });
-beneficiarySchema.index({ email: 1 }, { unique: true });
+// beneficiarySchema.index({ email: 1 }, { unique: true });
 
 const Beneficiary = mongoose.model("Beneficiary", beneficiarySchema, collectionName);
 export default Beneficiary;

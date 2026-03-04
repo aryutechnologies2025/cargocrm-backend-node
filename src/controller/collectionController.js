@@ -5,8 +5,8 @@ import { encryptData } from "../utils/encryption.js";
 
 const addCollection = async (req, res) => {
     try {
-        const { orderId, address, date_time } = req.body;
-        const collection = new CollectionDetails({ orderId, address, date_time });
+        const { orderId, address, date_time, city, country, postcode } = req.body;
+        const collection = new CollectionDetails({ orderId, address, date_time, city, country, postcode });
         await collection.save();
         res.json({ success: true, message: "Collection added successfully" });
     } catch (error) {
@@ -24,7 +24,10 @@ const getCollection = async (req, res) => {
             orderId: collection.orderId,
             tracking_number: collection?.orderId?.tracking_number,
             address: collection.address,
-            date_time: collection.date_time
+            date_time: collection.date_time,
+            city: collection.city,
+            country: collection.country,
+            postcode: collection.postcode,
         }));
         const formattedCustomers = customerDetails.map((customer) => ({
             id: customer._id,
@@ -49,7 +52,7 @@ const getCollection = async (req, res) => {
 const editCollection = async (req, res) => {
     try {
         const { id } = req.params;
-        const { orderId, address, date_time } = req.body;
+        const { orderId, address, date_time,city, country, postcode } = req.body;
         const collection = await CollectionDetails.findById(id);
         if (!collection) {
             return res.json({ success: false, message: "Collection not found" });
@@ -57,6 +60,9 @@ const editCollection = async (req, res) => {
         collection.orderId = orderId;
         collection.address = address;
         collection.date_time = date_time;
+        collection.city = city;
+        collection.country = country;
+        collection.postcode = postcode;
         await collection.save();
         res.json({ success: true, message: "Collection updated successfully" });
     } catch (error) {

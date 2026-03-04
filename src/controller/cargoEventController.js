@@ -20,11 +20,12 @@ const TrackingNumberInEvent = async (req, res) => {
         });
 
         if(!trackingDocs || trackingDocs.length === 0){
-            return res.json({ success: false, message: "No tracking number found" });
+            return res.status(404).json({ success: false, message: "No tracking number found" });
         }
 
         console.log("trackingDocs", trackingDocs);
 
+        
         const trackingObjectIds = trackingDocs.map(doc => doc._id);
         console.log("trackingObjectIds", trackingObjectIds);
 

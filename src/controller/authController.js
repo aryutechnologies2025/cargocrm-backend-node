@@ -51,13 +51,13 @@ const { email, password } = req.body;
         role: user?.role?.name || "",
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1m" }
     );
 
-       // Save login log
+    // Save login log
    const loginLog = await LoginLog.create({
       name: user?.name || "",
-      ip: req.ip,
+      ip: req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip || "unknown",
       login_time: new Date(),
       created_by: user._id
     });
@@ -201,6 +201,7 @@ const { email, password } = req.body;
 
     if (!user) {
       return res.json({ message: "Invalid or expired token" });
+      // return res.redirect("http://localhost:5173");
     }
 
     user.password = password; // auto-hashed by pre-save hook

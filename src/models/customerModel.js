@@ -14,6 +14,7 @@ const customerSchema = new mongoose.Schema({
   },
   email: {
     type: String,
+    // unique: true,
     trim: true
    
   },
@@ -55,7 +56,7 @@ const customerSchema = new mongoose.Schema({
 
 
 customerSchema.index({ name: 1 }); // Regular index instead of hashed
-customerSchema.index({ email: 1 }, { unique: true });
+// customerSchema.index({ email: 1 }, { unique: true });
 
 
 const Customer = mongoose.model("Customer", customerSchema, collectionName);

@@ -201,7 +201,7 @@ const addUpdateBeneficiary = async (req, res) => {
   try {
     const { id, customerId, name,postcode, email, phone, address, city, country, status } = req.body;
 
-    if (id) {
+    if (id && req.body.mode !== "existing") {
       const existingBeneficiary = await Beneficiary.findById(id);
 
       if (!existingBeneficiary) {
