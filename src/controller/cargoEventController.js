@@ -19,13 +19,20 @@ const TrackingNumberInEvent = async (req, res) => {
             tracking_number: tracking_number
         });
 
+        const formattedTrackingDocs = trackingDocs.map((doc) => ({
+            id: doc._id,
+            tracking_number: doc.tracking_number,
+            cargo_mode: doc.cargo_mode,
+            packed: doc.packed
+        }));
+
         if(!trackingDocs || trackingDocs.length === 0){
             return res.status(404).json({ success: false, message: "No tracking number found" });
         }
 
         console.log("trackingDocs", trackingDocs);
 
-        
+
         const trackingObjectIds = trackingDocs.map(doc => doc._id);
         console.log("trackingObjectIds", trackingObjectIds);
 
@@ -108,9 +115,15 @@ const TrackingNumberInEvent = async (req, res) => {
         console.log("beneficiaryDetails", beneficiaryDetails);
 
         const parcelDetails = await Parcel.findOne({
-            customerId: beneficiaryDetails ? beneficiaryDetails.customerId : null,
+            customerId: { $in: beneficiaryDetails.map(b => b.customerId) }
             // customerId: { $in: beneficiaryDetails.map(b => b.customerId) }
         });
+        const formattedParcelDetails = parcelDetails ? {
+            id: parcelDetails._id,
+            description: parcelDetails.description,
+            piece_number: Number(parcelDetails.piece_number),
+            total_weight: parcelDetails.piece_details?.reduce((sum, piece) => sum + piece.weight, 0)
+        } : null;
 
 
         // res.json({ 
@@ -125,8 +138,9 @@ const TrackingNumberInEvent = async (req, res) => {
             success: true,
             data: formattedEvents,
             beneficiary: formattedBeneficiary,
-            parcel: parcelDetails,
-            event:formattedCurrentEvents
+            parcel: formattedParcelDetails,
+            event:formattedCurrentEvents,
+            order:formattedTrackingDocs
         };
 
         res.status(200).json({ success: true, data: responseData });
