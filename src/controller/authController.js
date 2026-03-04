@@ -51,7 +51,7 @@ const { email, password } = req.body;
         role: user?.role?.name || "",
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1m" }
+      { expiresIn: "1h" }
     );
 
     // Save login log
