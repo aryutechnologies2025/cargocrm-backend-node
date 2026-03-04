@@ -106,10 +106,10 @@ const updateUser = async (req, res) => {
     }
 
     //  Check duplicate name (excluding current user)
-    const { name } = req.body;
+    const { name, email, role ,phone} = req.body;
     if (name) {
       const userExists = await User.findOne({
-        name,
+        name,email, role ,phone,
         _id: { $ne: id }
       });
 

@@ -143,10 +143,10 @@ const TrackingNumberInEvent = async (req, res) => {
             order:formattedTrackingDocs
         };
 
-        res.status(200).json({ success: true, data: responseData });
+        // res.status(200).json({ success: true, data: responseData });
 
-        // const encryptedData = encryptData(responseData);
-        // return res.status(200).json({ success: true, encrypted: true, data: encryptedData });
+        const encryptedData = encryptData(responseData);
+        return res.status(200).json({ success: true, encrypted: true, data: encryptedData });
 
     } catch (error) {
         res.json({ success: false, message: error.message || "Internal Server Error" });
