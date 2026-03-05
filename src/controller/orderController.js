@@ -465,367 +465,23 @@ const getNewBeneficiaryId = async (req, res) => {
   } 
 };
 
-
-
-
-
-// const allOrder = async (req, res) => {
-//   const { created_by } = req.query;
-// console.log("created_by", created_by);
-
-// try {
-//   const userDetails = await User.findOne({ _id: created_by });
-//   console.log("userDetails", userDetails);
-//   const userRole = await Role.findOne({ _id: userDetails.role });
-//   console.log("userRole", userRole);
-  
-//   let orders;
-  
-//   if (userRole && userRole.name === "Admin") {
-//     orders = await Order.find({ is_deleted: "0" })
-//       .populate("customerId", "name address email phone city country")
-//       .sort({ createdAt: -1 });
-//   } else {
-//     orders = await Order.find({
-//       is_deleted: "0", 
-//       created_by: created_by
-//     })
-//       .populate("customerId", "name address email phone city country postcode")
-//       .sort({ createdAt: -1 });
-//   }
-//     const beneficiaryDetails = await Beneficiary.find({ is_deleted: "0" })
-//       .populate("customerId", "name address postcode");
-//     const parcel = await Parcel.find({ is_deleted: "0" });
-
-//     const setting = await Setting.findOne();
-
-//     // Create grouped object
-//     const groupedData = {};
-
-//     // Helper function to initialize customer group
-//     const initCustomer = (customerId, customerName = null, customerAddress = null, customerEmail = null, customerPhone = null, customerCity = null, customerCountry = null, customerPostcode = null) => {
-//       if (!groupedData[customerId]) {
-//         groupedData[customerId] = {
-//           customerId,
-//           customerName,
-//           customerAddress,
-//           customerEmail,
-//           customerPhone,
-//           customerCity,
-//           customerCountry,
-//           customerPostcode,
-//           orders: [],
-//           beneficiaries: [],
-//           parcels: [],
-//           settings: setting
-//         };
-//       }
-//     };
-
-//     // Group Orders FIRST - only process customers who have orders
-//     orders.forEach((order) => {
-//       const customerId = order.customerId?._id?.toString();
-//       if (!customerId) return;
-
-//       initCustomer(customerId, order.customerId?.name, order.customerId?.address, order.customerId?.email, order.customerId?.phone, order.customerId?.city, order.customerId?.country);
-
-//       groupedData[customerId].orders.push({
-//         id: order._id,
-//         tracking_number: order.tracking_number,
-//         cargo_mode: order.cargo_mode,
-//         packed: order.packed,
-//         createdAt: order.createdAt
-//       });
-//     });
-
-//     // Only proceed with beneficiaries and parcels for customers who have orders
-//     if (Object.keys(groupedData).length > 0) {
-//       // Get customer IDs that have orders
-//       const customerIdsWithOrders = Object.keys(groupedData);
-
-//       // Filter beneficiaryDetails to only include those with customers that have orders
-//       beneficiaryDetails.forEach((beneficiary) => {
-//         const customerId = beneficiary.customerId?._id?.toString();
-//         if (!customerId || !customerIdsWithOrders.includes(customerId)) return;
-
-//         // Customer already exists in groupedData, no need to init again
-//         groupedData[customerId].beneficiaries.push({
-//           id: beneficiary._id,
-//           name: beneficiary.name,
-//           beneficiary_id: beneficiary.beneficiary_id,
-//           email: beneficiary.email,
-//           phone: beneficiary.phone,
-//           city: beneficiary.city,
-//           country: beneficiary.country,
-//           address: beneficiary.address
-//         });
-//       });
-
-//       // Filter parcels to only include those with customers that have orders
-//       parcel.forEach((p) => {
-//         const customerId = p.customerId?.toString();
-//         if (!customerId || !customerIdsWithOrders.includes(customerId)) return;
-
-//         // Customer already exists in groupedData, no need to init again
-//         groupedData[customerId].parcels.push({
-//           id: p._id,
-//           piece_number: p.piece_number,
-//           piece_details: p.piece_details,
-//           description: p.description
-//         });
-//       });
-//     }
-
-//     const responseData = {
-//       success: true,
-//       data: Object.values(groupedData)
-//     };
-
-//     const encryptedData = encryptData(responseData);
-
-//     return res.status(200).json({
-//       success: true,
-//       encrypted: true,
-//       data: encryptedData
-//     });
-
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: error.message || "Internal Server Error"
-//     });
-//   }
-// };
-
-const allOrder = async (req, res) => {
-  const { 
-    created_by, 
-    customer_name, 
-    beneficiary_name, 
-    created_by_name,
-    from_date, 
-    to_date 
-  } = req.query;
-  
-  console.log("created_by", created_by);
-  console.log("filters", { customer_name, beneficiary_name, created_by_name, from_date, to_date });
-
-  try {
-    const userDetails = await User.findOne({ _id: created_by });
-    console.log("userDetails", userDetails);
-    const userRole = await Role.findOne({ _id: userDetails.role });
-    console.log("userRole", userRole);
-    
-    let orders;
-    let orderQuery = { is_deleted: "0" };
-    
-    if (from_date || to_date) {
-      orderQuery.createdAt = {};
-      if (from_date) {
-        orderQuery.createdAt.$gte = new Date(from_date);
-      }
-      if (to_date) {
-        const endDate = new Date(to_date);
-        endDate.setHours(23, 59, 59, 999);
-        orderQuery.createdAt.$lte = endDate;
-      }
-    }
-    
-    if (userRole && userRole.name === "Admin") {
-      if (created_by_name) {
-        const users = await User.find({ 
-          name: { $regex: created_by_name, $options: 'i' } 
-        });
-        const userIds = users.map(u => u._id);
-        orderQuery.created_by = { $in: userIds };
-      }
-      
-      orders = await Order.find(orderQuery)
-        .populate({
-          path: "customerId",
-          select: "name address email phone city country",
-          match: customer_name ? { 
-            $or: [
-              { name: { $regex: `^${customer_name}$`, $options: 'i' } },
-              { phone: { $regex: `^${customer_name}$`, $options: 'i' } },
-              { email: { $regex: `^${customer_name}$`, $options: 'i' } },
-              { postcode: { $regex: `^${customer_name}$`, $options: 'i' } }
-            ]
-          } : {}
-        })
-        .populate("created_by", "name email")
-        .sort({ createdAt: -1 });
-    } else {
-      orderQuery.created_by = created_by;
-      orders = await Order.find(orderQuery)
-        .populate({
-          path: "customerId",
-          select: "name address email phone city country",
-          // match: customer_name ? { name: { $regex: customer_name, $options: 'i' } } : {}
-          match: customer_name ? { 
-            $or: [
-              { name: { $regex: `^${customer_name}$`, $options: 'i' } },
-              { phone: { $regex: `^${customer_name}$`, $options: 'i' } },
-              { email: { $regex: `^${customer_name}$`, $options: 'i' } },
-              { postcode: { $regex: `^${customer_name}$`, $options: 'i' } }
-            ]
-          } : {}
-        })
-        .populate("created_by", "name email")
-        .sort({ createdAt: -1 });
-    }
-
-    orders = orders.filter(order => order.customerId !== null);
-
-    console.log("Filtered orders count:", orders.length);
-
-    const beneficiaryDetails = await Beneficiary.find({ is_deleted: "0" })
-      .populate("customerId", "name address ");
-
-    let filteredBeneficiaries = beneficiaryDetails;
-    if (beneficiary_name) {
-      filteredBeneficiaries = beneficiaryDetails.filter(beneficiary => 
-        beneficiary.name && (
-          beneficiary.name.match(new RegExp(`^${beneficiary_name}$`, 'i')) ||
-          (beneficiary.phone && beneficiary.phone.match(new RegExp(`^${beneficiary_name}$`, 'i'))) ||
-          (beneficiary.email && beneficiary.email.match(new RegExp(`^${beneficiary_name}$`, 'i'))) ||
-          (beneficiary.city && beneficiary.city.match(new RegExp(`^${beneficiary_name}$`, 'i')))
-        )
-      );
-      
-      if (filteredBeneficiaries.length > 0) {
-        const beneficiaryCustomerIds = filteredBeneficiaries.map(b => b.customerId?._id?.toString()).filter(id => id);
-        orders = orders.filter(order => 
-          beneficiaryCustomerIds.includes(order.customerId?._id?.toString())
-        );
-      }
-    }
-
-    const parcel = await Parcel.find({ is_deleted: "0" });
-
-    const setting = await Setting.findOne();
-
-    // Create grouped object
-    const groupedData = {};
-
-    // Helper function to initialize customer group
-    const initCustomer = (customerId, customerName = null, customerAddress = null, customerEmail = null, customerPhone = null, customerCity = null, customerCountry = null) => {
-      if (!groupedData[customerId]) {
-        groupedData[customerId] = {
-          customerId,
-          customerName,
-          customerAddress,
-          customerEmail,
-          customerPhone,
-          customerCity,
-          customerCountry,
-          orders: [],
-          beneficiaries: [],
-          parcels: [],
-          settings: setting
-        };
-      }
-    };
-
-    // Group Orders
-    orders.forEach((order) => {
-      const customerId = order.customerId?._id?.toString();
-      if (!customerId) return;
-
-      initCustomer(customerId, order.customerId?.name, order.customerId?.address, order.customerId?.email, order.customerId?.phone, order.customerId?.city, order.customerId?.country);
-
-      groupedData[customerId].orders.push({
-        id: order._id,
-        tracking_number: order.tracking_number,
-        cargo_mode: order.cargo_mode,
-        packed: order.packed,
-        createdAt: order.createdAt,
-        created_by: order.created_by
-      });
-    });
-
-    // Only proceed with beneficiaries and parcels for customers who have orders
-    if (Object.keys(groupedData).length > 0) {
-      // Get customer IDs that have orders
-      const customerIdsWithOrders = Object.keys(groupedData);
-
-      // Use filtered beneficiaries
-      filteredBeneficiaries.forEach((beneficiary) => {
-        const customerId = beneficiary.customerId?._id?.toString();
-        if (!customerId || !customerIdsWithOrders.includes(customerId)) return;
-
-        groupedData[customerId].beneficiaries.push({
-          id: beneficiary._id,
-          name: beneficiary.name,
-          beneficiary_id: beneficiary.beneficiary_id,
-          email: beneficiary.email,
-          phone: beneficiary.phone,
-          city: beneficiary.city,
-          country: beneficiary.country,
-          address: beneficiary.address
-        });
-      });
-
-      // Filter parcels to only include those with customers that have orders
-      parcel.forEach((p) => {
-        const customerId = p.customerId?.toString();
-        if (!customerId || !customerIdsWithOrders.includes(customerId)) return;
-
-        groupedData[customerId].parcels.push({
-          id: p._id,
-          piece_number: p.piece_number,
-          piece_details: p.piece_details,
-          description: p.description
-        });
-      });
-    }
-
-    const finalData = Object.values(groupedData).filter(customer => customer.orders.length > 0);
-
-    const responseData = {
-      success: true,
-      data: finalData
-    };
-
-    res.status(200).json(responseData);
-
-    // const encryptedData = encryptData(responseData);
-
-    // return res.status(200).json({
-    //   success: true,
-    //   encrypted: true,
-    //   data: encryptedData
-    // });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || "Internal Server Error"
-    });
-  }
-};
 const getPieceAndWeightInParcel = async (req, res) => {
   // const { customerId } = req.params;
   
   try {
-    // Handle both formats: tracking_numbers[] and tracking_numbers
     let trackingNumbersArray = [];
     
-    // Check for tracking_numbers[] format
     if (req.query['tracking_numbers[]']) {
       const tnArray = req.query['tracking_numbers[]'];
       trackingNumbersArray = Array.isArray(tnArray) ? tnArray : [tnArray];
     }
-    // Check for tracking_numbers format
     else if (req.query.tracking_numbers) {
       const tn = req.query.tracking_numbers;
       trackingNumbersArray = Array.isArray(tn) ? tn : [tn];
     }
     
-    // Filter out any empty values
     trackingNumbersArray = trackingNumbersArray.filter(tn => tn && tn.trim() !== '');
     
-    console.log("Received tracking numbers:", trackingNumbersArray);
     
     if (!trackingNumbersArray.length) {
       return res.status(400).json({
@@ -838,74 +494,61 @@ const getPieceAndWeightInParcel = async (req, res) => {
       });
     }
 
-    // Rest of your code remains the same...
-    const orders = await Order.find({
+    const customers = await Customer.find({
       tracking_number: { $in: trackingNumbersArray },
-      // customerId: customerId,
       is_deleted: "0"
     });
 
-    if (!orders.length) {
+    if (!customers.length) {
       return res.status(404).json({
         success: false,
-        message: "No orders found for the provided tracking numbers",
+        message: "No records found for the provided tracking numbers",
         tracking_numbers_provided: trackingNumbersArray
       });
     }
 
-    // Get all parcel IDs from the orders
-    const parcelIds = orders.map(order => order.customerId);
-    console.log("parcelIds", parcelIds);
-
-    // Find all parcels associated with these orders
-    const parcels = await Parcel.find({
-      customerId: { $in: parcelIds },
-      // customerId: customerId,
-      is_deleted: "0"
-    });
-
-    // Calculate totals
     let totalPieceNumber = 0;
     let totalWeight = 0;
 
-    parcels.forEach(parcel => {
-      totalPieceNumber += parseInt(parcel.piece_number) || 0;
+    customers.forEach(customer => {
+      totalPieceNumber += parseInt(customer.piece_number) || 0;
       
-      if (parcel.piece_details && Array.isArray(parcel.piece_details)) {
-        parcel.piece_details.forEach(detail => {
+      if (customer.piece_details && Array.isArray(customer.piece_details)) {
+        customer.piece_details.forEach(detail => {
           totalWeight += parseFloat(detail.weight) || 0;
         });
       }
     });
 
-    // Prepare response data
     const responseData = {
       success: true,
       data: {
-        // customerId: customerId,
         tracking_numbers: trackingNumbersArray,
         total_piece_number: totalPieceNumber,
         total_weight: totalWeight,
-        parcel_count: parcels.length,
-        order_count: orders.length,
-        parcels_details: parcels.map(parcel => ({
-          parcel_id: parcel._id,
-          piece_number: parcel.piece_number,
-          piece_details: parcel.piece_details
+        record_count: customers.length,
+        customers_details: customers.map(customer => ({
+          customer_id: customer._id,
+          tracking_number: customer.tracking_number,
+          customer_name: customer.customerName,
+          piece_number: customer.piece_number,
+          piece_details: customer.piece_details,
+          beneficiary_name: customer.beneficiaryName,
+          cargo_mode: customer.cargo_mode,
+          status: customer.status
         }))
       }
     };
 
-    // Encrypt the response data
-    // const encryptedData = encryptData(responseData);
+    const encryptedData = encryptData(responseData);
     
-    // return res.status(200).json({
-    //   success: true,
-    //   encrypted: true,
-    //   data: encryptedData,
-    // });
+    return res.status(200).json({
+      success: true,
+      encrypted: true,
+      data: encryptedData,
+    });
 
-    return res.status(200).json(responseData);
+    // return res.status(200).json(responseData);
 
   } catch (error) {
     console.error("Error in getPieceAndWeightInParcel:", error);
@@ -918,4 +561,4 @@ const getPieceAndWeightInParcel = async (req, res) => {
 
     
 
-export {getPieceAndWeightInParcel,addUpdateOrder,getNewBeneficiaryId,allOrder,getParcelByIds, createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };
+export {getPieceAndWeightInParcel,addUpdateOrder,getNewBeneficiaryId,getParcelByIds, createOrder,getSenderByBeneficiary, getOrders, getOrderById, getOrdersBySender, getOrdersByBeneficiary, editOrder, deleteOrder };

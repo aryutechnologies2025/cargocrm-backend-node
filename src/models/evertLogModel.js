@@ -11,7 +11,7 @@ const eventLogSchema = new mongoose.Schema({
       },
     tracking_number: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Order",
+        ref: "Customer",
       }],
     quantity: {
     type: Number,

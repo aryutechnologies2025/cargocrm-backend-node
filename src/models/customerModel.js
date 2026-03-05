@@ -7,36 +7,95 @@ const customerSchema = new mongoose.Schema({
   //   type: String,
   //   unique: true
   // },
-  name: {
+  tracking_number:{
+    type: String,
+    unique: true,
+    trim: true
+  },
+  customerName: {
     type: String,
     trim: true
 
   },
-  email: {
+  customerEmail: {
     type: String,
     // unique: true,
     trim: true
    
   },
-  phone: {
+  customerPhone: {
     type: String,
   },
-  address: {
+  customerAddress: {
     type: String,
    
   },
   
-  city: {
+  customerCity: {
     type: String,
    
   },
-  country: {
+  customerCountry: {
     type: String,
    
   },
-  postcode:{
+  customerPostcode:{
     type:String
   },
+  beneficiaryName:{
+    type: String,
+  },
+  beneficiaryEmail:{
+    type: String,
+  },
+  beneficiaryPhone:{
+    type:String
+  },
+  beneficiaryAddress:{
+    type: String,
+  },
+  beneficiaryCity:{
+    type: String,
+  },
+  beneficiaryCountry:{  
+    type: String,
+  },
+  beneficiaryPostcode:{
+    type: String
+  },
+  piece_number:{
+    type: String,
+  },
+  piece_details: [
+    {
+      weight: {
+        type: String,
+        trim: true
+      },
+
+      length: {
+        type: String,
+        trim: true
+      },
+      width: {
+        type: String,
+        trim: true
+      },
+      height: {
+        type: String,
+        trim: true
+      },
+    }],
+    description:{
+    type: String,
+    trim: true,
+    },
+    cargo_mode:{
+      type: String,
+    },
+    packed:{
+      type: String,
+    },
   status: {
     type: String,
     default: "1"
@@ -55,7 +114,9 @@ const customerSchema = new mongoose.Schema({
 });
 
 
-customerSchema.index({ name: 1 }); // Regular index instead of hashed
+customerSchema.index({ customerName: 1 });
+customerSchema.index({ beneficiaryName: 1 });
+customerSchema.index({ tracking_number: 1 });
 // customerSchema.index({ email: 1 }, { unique: true });
 
 

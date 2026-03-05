@@ -27,32 +27,11 @@ const generateCustomerId = async () => {
 
  const addCustomer = async (req, res) => {
   try {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.json({ success: false, message: "Data is required" });
-    }
-
-    const { name, email, phone, address, status,create_by } = req.body;
-
-    // Check if email already exists
-      const emailExists = await Customer.findOne({ email });
-    if (emailExists) {
-      return res.json({
-        success: false,
-        message: "Email already exists"
-      });
-    }
-
-     //  Generate customerId
-    const customer_id = await generateCustomerId();
+  
+    const {tracking_number, customerName, customerEmail, customerPhone, customerAddress, customerCity, customerCountry, customerPostcode,beneficiaryName,beneficiaryEmail,beneficiaryPhone,beneficiaryAddress,beneficiaryCity,beneficiaryCountry,beneficiaryPostcode,piece_number, piece_details, description, cargo_mode, packed, created_by} = req.body;
 
     const customer = new Customer({
-      customer_id,
-      name,
-      email,
-      phone,
-      address,
-      status,
-      create_by
+     tracking_number, customerName, customerEmail, customerPhone, customerAddress, customerCity, customerCountry, customerPostcode,beneficiaryName,beneficiaryEmail,beneficiaryPhone,beneficiaryAddress,beneficiaryCity,beneficiaryCountry,beneficiaryPostcode,piece_number, piece_details, description, cargo_mode, packed, created_by
     });
 
     await customer.save();
@@ -94,21 +73,10 @@ const generateCustomerId = async () => {
  const editCustomer = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const customer = await Customer.findById(id);
-    if (!customer) {
-      return res.json({ success: false, message: "Customer not found" });
-    }
-
-    const { email } = req.body;
-    if (email && email !== customer.email) {
-      const emailExists = await checkExistingRecord(Customer, { email, _id: { $ne: id } }, "email", res);
-      if (emailExists) return;
-    }
 
     const updated = await Customer.findByIdAndUpdate(id, req.body, {
       new: true,
-      runValidators: true
+      runValidators: true 
     });
 
     res.json({ success: true, message: "Customer updated successfully"});

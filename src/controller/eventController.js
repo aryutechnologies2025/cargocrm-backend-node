@@ -72,7 +72,7 @@ const getEvents = async (req, res) => {
       .populate("created_by", "name email")
       .sort({ createdAt: -1 });
     const eventMaster = await EventMaster.find({ is_deleted: "0", status: "1" });
-    const orders = await Order.find({ is_deleted: "0", status: "1" });
+    const orders = await Customer.find({ is_deleted: "0", status: "1" });
     const container = await ContainerRun.find({ is_deleted: "0", status: "1" });
 
     const formattedEvents = events.map((event) => ({
