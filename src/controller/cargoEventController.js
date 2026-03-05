@@ -38,7 +38,8 @@ const TrackingNumberInEvent = async (req, res) => {
             beneficiaryCountry: doc.beneficiaryCountry,
             beneficiaryPostcode: doc.beneficiaryPostcode,
             cargo_mode: doc.cargo_mode,
-            packed: doc.packed
+            packed: doc.packed,
+            piece_number: doc.piece_number,
 
         }));
 

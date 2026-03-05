@@ -23,7 +23,7 @@ const { email, password } = req.body;
 
    //  Check user exists
     const user = await User
-      .findOne({ email })
+      .findOne({ email})
       .select("+password")
       .populate("role", "name");
     console.log("USER FROM DB:", user);
@@ -33,16 +33,28 @@ const { email, password } = req.body;
         message: "Invalid email or password"
       });
     }
+    if(user.status === "0"){
+      return res.json({
+        success: false,
+        message: "Your account is inactive. Please contact administrator."
+      });
+    }
+    if(user.is_deleted === "1"){
+      return res.json({
+        success: false,
+        message: "Your account is deleted. Please contact administrator."
+      });
+    }
   
     console.log("USER FROM DB:", user);
     //  Compare password
-    // const isMatch = await bcrypt.compare(password, user.password);
-    // if (!isMatch) {
-    //   return res.json({
-    //     success: false,
-    //     message: "Invalid email or password"
-    //   });
-    // }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.json({
+        success: false,
+        message: "Invalid email or password"
+      });
+    }
 
 
     // Generate JWT

@@ -2,7 +2,22 @@ import mongoose from "mongoose";
 const collectionSchema = new mongoose.Schema({
     orderId:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Order"
+        ref: "Customer",
+    },
+    email:{
+        type:String
+    },
+    phone_no:{
+        type:String
+    },
+    alter_phone:{
+        type:String
+    },
+    collection_for:{
+        type:String
+    },
+    notes:{
+        type:String
     },
     address:{
         type:String
@@ -18,6 +33,10 @@ const collectionSchema = new mongoose.Schema({
     },
     date_time:{
         type:String
+    },
+    status:{
+        type:String,
+        default:"pending"
     },
     is_deleted:{
         type:String,
