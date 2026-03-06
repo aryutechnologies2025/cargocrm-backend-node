@@ -131,33 +131,37 @@ const registerUser = async (req, res) => {
       return res.json({ message: "Email Already Exists" });
     }
 
-    // Create user - the pre-save hook should hash the password
+    // Create user
     const user = new User({
       name,
       email,
-      password, // This will be hashed by the pre-save hook
+      password,
       role,
-      status: "1" // Set default status if needed
+      status: "1"
     });
 
-    // Save the user
+    // Save the user - this will trigger the pre-save hook
     await user.save();
 
-    // Fetch the user without password for response
-    const userResponse = await User.findById(user._id);
+    // Don't return the password in response
+    const userResponse = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    };
 
     res.json({
       success: true,
       message: "User Registration successfully",
-      user: {
-        id: userResponse._id,
-        name: userResponse.name,
-        email: userResponse.email,
-      }
+      user: userResponse
     });
   } catch (error) {
     console.error("Registration error:", error);
-    res.json({ success: false, message: error.message || "Internal Server Error" });
+    res.json({ 
+      success: false, 
+      message: error.message || "Internal Server Error" 
+    });
   }
 };
 

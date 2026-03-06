@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Hash password with error handling
+// Fix 1: Add next parameter and call it
 userSchema.pre("save", async function(next) {
   try {
     if (!this.isModified("password")) {
@@ -65,6 +65,18 @@ userSchema.pre("save", async function(next) {
     next(error);
   }
 });
+
+// OR Fix 2: Remove next and just return (for async functions)
+/*
+userSchema.pre("save", async function() {
+  if (!this.isModified("password")) return;
+  
+  console.log("Hashing password for user:", this.email);
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  console.log("Password hashed successfully");
+});
+*/
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
