@@ -69,7 +69,7 @@ const loginUser = async (req, res) => {
 
     console.log("Login successful for user:", email);
 
-    await LoginLog.create({
+    const loginLog =  await LoginLog.create({
       user: user._id,
       email: email,
       ip: req.ip,
