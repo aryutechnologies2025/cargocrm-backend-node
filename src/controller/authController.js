@@ -94,7 +94,14 @@ const loginUser = async (req, res) => {
       success: true,
       message: "Login successful",
       token,
-      user: userData
+      user: {
+        id: user._id,
+        firstName: user?.name || "",
+        email: user.email,
+        role: user?.role?.name || "",
+        log_id: loginLog._id
+
+      }
     });
 
   } catch (error) {
