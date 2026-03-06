@@ -17,13 +17,12 @@ const loginUser = async (req, res) => {
 
     console.log("Login attempt for email:", email);
 
- 
     const user = await User
       .findOne({ email })
       .select("+password")
       .populate("role", "name");
       
-    console.log("USER FROM DB:", user);
+    console.log("User found:", user ? "Yes" : "No");
     
     if (!user) {
       return res.json({
@@ -31,7 +30,28 @@ const loginUser = async (req, res) => {
         message: "Invalid email or password"
       });
     }
+
+    // Check if password field exists
+    if (!user.password) {
+      console.log("ERROR: No password field for user");
+      return res.json({
+        success: false,
+        message: "Account error. Please contact support."
+      });
+    }
+
+    // Use the model's comparePassword method
+    const isMatch = await user.comparePassword(password);
+    console.log("Password match result:", isMatch);
     
+    if (!isMatch) {
+      return res.json({
+        success: false,
+        message: "Invalid email or password"
+      });
+    }
+
+    // Check account status
     if (user.status === "0") {
       return res.json({
         success: false,
@@ -46,14 +66,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.json({
-        success: false,
-        message: "Invalid email or password"
-      });
-    }
-
+    // Generate JWT
     const token = jwt.sign(
       {
         id: user._id,
@@ -63,6 +76,7 @@ const loginUser = async (req, res) => {
       { expiresIn: "1h" }
     );
 
+    // Save login log
     const loginLog = await LoginLog.create({
       name: user?.name || "",
       ip: req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip || "unknown",
@@ -70,6 +84,7 @@ const loginUser = async (req, res) => {
       created_by: user._id
     });
 
+    // Set cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -90,8 +105,9 @@ const loginUser = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("LOGIN ERROR ", err);
+    console.error("LOGIN ERROR:", err);
     res.json({
+      success: false,
       message: "Login failed",
       error: err.message
     });
@@ -109,41 +125,38 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Check if name meets minimum length
-    if (name.length < 3) {
-      return res.json({
-        message: "Name must be at least 3 characters long"
-      });
-    }
-
     // Check if user exists
     const exists = await User.findOne({ email });
     if (exists) {
       return res.json({ message: "Email Already Exists" });
     }
 
-    // Hash password manually if pre-save hook isn't working
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const user = await User.create({
+    // Create user - the pre-save hook should hash the password
+    const user = new User({
       name,
       email,
-      password: hashedPassword, // Use hashed password explicitly
-      role
+      password, // This will be hashed by the pre-save hook
+      role,
+      status: "1" // Set default status if needed
     });
+
+    // Save the user
+    await user.save();
+
+    // Fetch the user without password for response
+    const userResponse = await User.findById(user._id);
 
     res.json({
       success: true,
       message: "User Registration successfully",
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
+        id: userResponse._id,
+        name: userResponse.name,
+        email: userResponse.email,
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error("Registration error:", error);
     res.json({ success: false, message: error.message || "Internal Server Error" });
   }
 };
