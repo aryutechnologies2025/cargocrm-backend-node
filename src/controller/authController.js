@@ -1,53 +1,51 @@
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 
- import crypto from "crypto";
- import bcrypt from 'bcrypt';
+import crypto from "crypto";
+import bcrypt from 'bcrypt';
 
 import LoginLog from "../models/loginLogModel.js";
 
 import express from "express";
 
 
-
-
-//login
 const loginUser = async (req, res) => {
-console.log("LOGIN BODY:", req.body);
+  console.log("LOGIN BODY:", req.body);
 
   try {
-
-const { email, password } = req.body;
+    const { email, password } = req.body;
 
     console.log("Login attempt for email:", email);
 
-   //  Check user exists
+ 
     const user = await User
-      .findOne({ email})
+      .findOne({ email })
       .select("+password")
       .populate("role", "name");
+      
     console.log("USER FROM DB:", user);
+    
     if (!user) {
       return res.json({
         success: false,
         message: "Invalid email or password"
       });
     }
-    if(user.status === "0"){
+    
+    if (user.status === "0") {
       return res.json({
         success: false,
         message: "Your account is inactive. Please contact administrator."
       });
     }
-    if(user.is_deleted === "1"){
+    
+    if (user.is_deleted === "1") {
       return res.json({
         success: false,
         message: "Your account is deleted. Please contact administrator."
       });
     }
-  
-    console.log("USER FROM DB:", user);
-    //  Compare password
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.json({
@@ -56,32 +54,28 @@ const { email, password } = req.body;
       });
     }
 
-
-    // Generate JWT
-     const token = jwt.sign(
-      { id: user._id, 
+    const token = jwt.sign(
+      {
+        id: user._id,
         role: user?.role?.name || "",
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // Save login log
-   const loginLog = await LoginLog.create({
+    const loginLog = await LoginLog.create({
       name: user?.name || "",
       ip: req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip || "unknown",
       login_time: new Date(),
       created_by: user._id
     });
 
-    // Set cookie
     res.cookie("token", token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
-
-   maxAge: 60 * 60 * 1000
-});
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 1000
+    });
 
     res.json({
       success: true,
@@ -92,7 +86,6 @@ const { email, password } = req.body;
         email: user.email,
         role: user?.role?.name || "",
         log_id: loginLog._id
-
       }
     });
 
@@ -105,35 +98,38 @@ const { email, password } = req.body;
   }
 };
 
-
- const registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
-    const { name, email, password,role } = req.body;
+    const { name, email, password, role } = req.body;
 
     // Validate required fields
     if (!name || !email || !password) {
-      return res.json({ 
+      return res.json({
         message: "Name, Email and Password are required",
-        // required: ["firstName", "email", "password"]
       });
     }
 
-    // Check if firstName meets minimum length
+    // Check if name meets minimum length
     if (name.length < 3) {
-      return res.json({ 
-        message: "First name must be at least 3 characters long" 
+      return res.json({
+        message: "Name must be at least 3 characters long"
       });
     }
 
+    // Check if user exists
     const exists = await User.findOne({ email });
     if (exists) {
       return res.json({ message: "Email Already Exists" });
     }
 
+    // Hash password manually if pre-save hook isn't working
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const user = await User.create({
       name,
       email,
-      password,   // auto-hashed by pre-save hook
+      password: hashedPassword, // Use hashed password explicitly
       role
     });
 
@@ -144,7 +140,6 @@ const { email, password } = req.body;
         id: user._id,
         name: user.name,
         email: user.email,
-      
       }
     });
   } catch (error) {
@@ -154,7 +149,7 @@ const { email, password } = req.body;
 };
 
 
- const forgotPassword = async (req, res) => {
+const forgotPassword = async (req, res) => {
   try {
     const { email, captchaChecked } = req.body;
 
@@ -196,7 +191,7 @@ const { email, password } = req.body;
   }
 };
 
- const resetPassword = async (req, res) => {
+const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
@@ -230,23 +225,23 @@ const { email, password } = req.body;
 };
 
 
-const logoutUser = async(req, res) => {
-const { id } = req.body;
+const logoutUser = async (req, res) => {
+  const { id } = req.body;
   try {
- 
-  const logout = await   LoginLog.updateOne({ _id: id }, { $set: { logout_time: new Date() } });
 
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "development",
-    // secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-  res.json( { message: "Logged out successfully" } );
+    const logout = await LoginLog.updateOne({ _id: id }, { $set: { logout_time: new Date() } });
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "development",
+      // secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+    res.json({ message: "Logged out successfully" });
   } catch (error) {
     res.json({ message: error.message || "Logout failed" });
   }
- 
+
 };
 
 
