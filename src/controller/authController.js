@@ -10,106 +10,99 @@ import express from "express";
 
 
 const loginUser = async (req, res) => {
-  console.log("LOGIN BODY:", req.body);
+  console.log("=== LOGIN DEBUG ===");
+  console.log("Request body:", { ...req.body, password: req.body.password ? "[REDACTED]" : "Not provided" });
 
   try {
     const { email, password } = req.body;
 
-    console.log("Login attempt for email:", email);
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required"
+      });
+    }
+
+    console.log(`Login attempt for email: ${email}`);
 
     const user = await User
-      .findOne({ email })
+      .findOne({ email: email.toLowerCase() })
       .select("+password")
       .populate("role", "name");
       
-    console.log("User found:", user ? "Yes" : "No");
-    
     if (!user) {
-      return res.json({
+      console.log("User not found");
+      return res.status(401).json({
         success: false,
         message: "Invalid email or password"
       });
     }
 
-    // Check if password field exists
-    if (!user.password) {
-      console.log("ERROR: No password field for user");
-      return res.json({
-        success: false,
-        message: "Account error. Please contact support."
-      });
+    console.log("User found:", user.email);
+    console.log("Stored password hash exists:", !!user.password);
+    
+    if (user.password) {
+      console.log("Stored password hash format:", user.password.substring(0, 20) + "...");
+      console.log("Is valid bcrypt hash:", user.password.startsWith("$2b$"));
     }
 
-    // Use the model's comparePassword method
     const isMatch = await user.comparePassword(password);
     console.log("Password match result:", isMatch);
     
     if (!isMatch) {
-      return res.json({
+      console.log("Password mismatch for user:", email);
+      
+      await LoginLog.create({
+        user: user._id,
+        email: email,
+        ip: req.ip,
+        userAgent: req.get("User-Agent"),
+        status: "failed",
+        reason: "Invalid password"
+      });
+      
+      return res.status(401).json({
         success: false,
         message: "Invalid email or password"
       });
     }
 
-    // Check account status
-    if (user.status === "0") {
-      return res.json({
-        success: false,
-        message: "Your account is inactive. Please contact administrator."
-      });
-    }
-    
-    if (user.is_deleted === "1") {
-      return res.json({
-        success: false,
-        message: "Your account is deleted. Please contact administrator."
-      });
-    }
+    console.log("Login successful for user:", email);
 
-    // Generate JWT
+    await LoginLog.create({
+      user: user._id,
+      email: email,
+      ip: req.ip,
+      userAgent: req.get("User-Agent"),
+      status: "success"
+    });
+
     const token = jwt.sign(
-      {
-        id: user._id,
-        role: user?.role?.name || "",
+      { 
+        id: user._id, 
+        email: user.email,
+        role: user.role 
       },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET || "your-secret-key",
+      { expiresIn: "7d" }
     );
 
-    // Save login log
-    const loginLog = await LoginLog.create({
-      name: user?.name || "",
-      ip: req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || req.ip || "unknown",
-      login_time: new Date(),
-      created_by: user._id
-    });
-
-    // Set cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 1000
-    });
+    const userData = user.toObject();
+    delete userData.password;
 
     res.json({
       success: true,
+      message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        firstName: user?.name || "",
-        email: user.email,
-        role: user?.role?.name || "",
-        log_id: loginLog._id
-      }
+      user: userData
     });
 
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    res.json({
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({
       success: false,
-      message: "Login failed",
-      error: err.message
+      message: "Login failed due to server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
     });
   }
 };
@@ -118,32 +111,60 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Validate required fields
+    console.log("=== REGISTRATION DEBUG ===");
+    console.log("Email:", email);
+    console.log("Password provided:", !!password);
+
     if (!name || !email || !password) {
-      return res.json({
+      return res.status(400).json({
+        success: false,
         message: "Name, Email and Password are required",
       });
     }
 
-    // Check if user exists
-    const exists = await User.findOne({ email });
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    const exists = await User.findOne({ email: email.toLowerCase() });
     if (exists) {
-      return res.json({ message: "Email Already Exists" });
+      return res.status(409).json({ 
+        success: false,
+        message: "Email already exists" 
+      });
     }
 
     // Create user
     const user = new User({
       name,
-      email,
+      email: email.toLowerCase(),
       password,
       role,
       status: "1"
     });
 
-    // Save the user - this will trigger the pre-save hook
+    console.log("Before save - password original:", password);
+
     await user.save();
 
-    // Don't return the password in response
+    console.log("User saved with ID:", user._id);
+
+    const savedUser = await User.findById(user._id).select("+password");
+    console.log("After save - stored password hash:", savedUser.password);
+    console.log("Is password hashed?", savedUser.password.startsWith("$2b$"));
+
+    const verifyMatch = await bcrypt.compare(password, savedUser.password);
+    console.log("Verification - password matches:", verifyMatch);
+    
+    if (!verifyMatch) {
+      console.error("WARNING: Password verification failed after registration!");
+    }
+
+    console.log("=== REGISTRATION COMPLETE ===");
+
     const userResponse = {
       id: user._id,
       name: user.name,
@@ -151,14 +172,22 @@ const registerUser = async (req, res) => {
       role: user.role
     };
 
-    res.json({
+    res.status(201).json({
       success: true,
-      message: "User Registration successfully",
+      message: "User registered successfully",
       user: userResponse
     });
   } catch (error) {
     console.error("Registration error:", error);
-    res.json({ 
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        success: false, 
+        message: Object.values(error.errors).map(e => e.message).join(', ')
+      });
+    }
+    
+    res.status(500).json({ 
       success: false, 
       message: error.message || "Internal Server Error" 
     });
