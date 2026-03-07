@@ -5,6 +5,8 @@ import CustomerLog from "../models/customerLogModel.js";
 import Customer from "../models/customerModel.js";
 import { encryptData } from "../utils/encryption.js";
 import { checkExistingRecord, handleValidationError } from "./baseController.js";
+import User from "../models/userModel.js";
+import Roles from "../models/roleModels.js";
 
 const addCustomer = async (req, res) => {
   try {
@@ -40,19 +42,91 @@ const addCustomer = async (req, res) => {
 };
 
 const getCustomers = async (req, res) => {
+  const { customerName, beneficiaryName, created_by_name, cargo_mode, from_date, to_date, created_by } = req.query;
+
   try {
-    const customers = await Customer.find({ is_deleted: "0" })
-      .populate("created_by", "name email").sort({ createdAt: -1 });
+
+    const roleDetails = await Roles.findById(created_by);
+
+
+    let filter = { is_deleted: "0" };
+
+    if (roleDetails?.name !== "Admin") {
+      filter.created_by = created_by;
+    }
+
+    if (customerName) {
+      filter.customerName = { $regex: customerName, $options: 'i' };
+    }
+
+    if (beneficiaryName) {
+      filter.beneficiaryName = { $regex: beneficiaryName, $options: 'i' };
+    }
+
+    if (created_by_name) {
+
+      filter.created_by = created_by_name;
+
+    }
+
+    if (cargo_mode) {
+      filter.cargo_mode = cargo_mode;
+    }
+
+    if (from_date || to_date) {
+      filter.createdAt = {};
+
+      if (from_date) {
+        const fromDateObj = new Date(from_date);
+        if (isNaN(fromDateObj)) {
+          return res.json({
+            success: false,
+            message: "Invalid from_date format"
+          });
+        }
+        filter.createdAt.$gte = fromDateObj;
+      }
+
+      if (to_date) {
+        const toDateObj = new Date(to_date);
+        if (isNaN(toDateObj)) {
+          return res.json({
+            success: false,
+            message: "Invalid to_date format"
+          });
+        }
+        const endDate = new Date(toDateObj);
+        endDate.setDate(endDate.getDate() + 1);
+        filter.createdAt.$lt = endDate;
+      }
+    }
+
+    const customers = await Customer.find(filter)
+      .populate("created_by", "name email")
+      .sort({ createdAt: -1 });
+
+    const userDetails = await User.find({ is_deleted: "0", status: "1" });
+    const formattedUserDetails = userDetails.map((user) => ({
+      id: user._id,
+      name: user.name
+    }));
+
     const responseData = {
       success: true,
       data: customers,
+      user: formattedUserDetails
     };
+
     const encryptedData = encryptData(responseData);
     return res.json({ success: true, encrypted: true, data: encryptedData });
-    // return r
-    // res.json({ success: true, data: customers });
+
   } catch (error) {
-    res.json({ success: false, message: "Internal Server Error" });
+    console.error("Error fetching customers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message
+    });
   }
 };
 
@@ -221,7 +295,7 @@ const getCustomerName = async (req, res) => {
       id: customer._id,
       name: customer.customerName
     }));
-  
+
     const responseData = {
       success: true,
       customer: formattedCustomerData,
@@ -284,7 +358,7 @@ const getBeneficiaryDetails = async (req, res) => {
   try {
     const { id } = req.query;
     const beneficiaryDetails = await BeneficiaryLog.findById(id);
-  
+
     const formattedBeneficiaryDetails = {
       id: beneficiaryDetails._id,
       name: beneficiaryDetails.beneficiaryName,
@@ -310,4 +384,4 @@ const getBeneficiaryDetails = async (req, res) => {
 
 
 
-export {getCustomerDetails, getCustomerName, getBeneficiaryDetails, getBeneficiaryName, addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };
+export { getCustomerDetails, getCustomerName, getBeneficiaryDetails, getBeneficiaryName, addCustomer, getCustomers, getCustomerById, editCustomer, deleteCustomer };
